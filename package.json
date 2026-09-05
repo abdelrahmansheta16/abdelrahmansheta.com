@@ -4,9 +4,17 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm compile:corpus && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "format": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "compile:corpus": "tsx scripts/compile-corpus.ts",
+    "test": "vitest run",
+    "guard": "vitest run tests/guardrails",
+    "eval:smoke": "echo 'promptfoo smoke: see scripts/eval'",
+    "push:agent": "tsx scripts/push-agent-config.ts",
+    "build:cv": "tsx scripts/build-cv.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.49",
@@ -45,5 +53,8 @@
     "typescript": "^5",
     "vitest": "^5.0.0"
   },
-  "packageManager": "pnpm@10.30.0"
+  "packageManager": "pnpm@10.30.0",
+  "engines": {
+    "node": ">=20.9"
+  }
 }
