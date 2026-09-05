@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# portfolio
+lib/corpus/corpus.generated.ts
+generated/
+.env
+.env.*
+!.env.example
+public/cv.pdf
+scripts/eval/.cache/

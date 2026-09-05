@@ -9,19 +9,41 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.49",
+    "@ai-sdk/openai-compatible": "^3.0.44",
+    "@ai-sdk/react": "^4.0.96",
+    "@calcom/embed-react": "^1.5.3",
+    "@elevenlabs/client": "^1.24.0",
+    "@elevenlabs/elevenlabs-js": "^2.66.0",
+    "@supabase/ssr": "^0.12.6",
+    "@supabase/supabase-js": "^2.115.0",
+    "ai": "^7.0.93",
+    "botid": "^1.5.11",
+    "gray-matter": "^4.0.3",
+    "js-tiktoken": "^1.0.21",
+    "libphonenumber-js": "^1.13.12",
+    "motion": "^13.2.0",
     "next": "16.3.4",
+    "next-intl": "^4.14.2",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "resend": "^6.26.0",
+    "yaml": "^2.9.0",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^5.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "prettier": "^3.9.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.23.13",
+    "typescript": "^5",
+    "vitest": "^5.0.0"
   },
   "packageManager": "pnpm@10.30.0"
 }
