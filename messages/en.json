@@ -1,0 +1,180 @@
+{
+  "meta": {
+    "siteName": "Abdelrahman Sheta",
+    "homeTitle": "Abdelrahman Sheta — AI engineer",
+    "homeDescription": "AI engineer in Cairo. Talk to an AI version of me in my own cloned voice, in English or Egyptian Arabic.",
+    "cvTitle": "CV",
+    "cvDescription": "The full CV of Abdelrahman Sheta: roles, projects, skills and education.",
+    "privacyTitle": "Privacy",
+    "privacyDescription": "What this site processes, who processes it, and how to have it erased.",
+    "architectureTitle": "How this site works",
+    "architectureDescription": "The architecture behind the bilingual voice agent: transport, brain, guardrails, caps and evals.",
+    "notFoundTitle": "Not found"
+  },
+  "nav": {
+    "skip": "Skip to content",
+    "home": "Home",
+    "cv": "CV",
+    "architecture": "How it works",
+    "privacy": "Privacy",
+    "primary": "Primary",
+    "language": "Language",
+    "switchToArabic": "العربية",
+    "switchToEnglish": "English"
+  },
+  "hero": {
+    "badge": "AI version of Abdelrahman",
+    "voiceNote": "This is my voice, cloned. Answers are grounded in my CV and project notes.",
+    "talk": "Talk to me",
+    "type": "Type instead",
+    "chipsLabel": "Suggested questions",
+    "chips": {
+      "cravit": { "label": "What did you build at Cravit?", "prompt": "What did you build at Cravit?" },
+      "cost": { "label": "How did you cut LLM cost 70%?", "prompt": "How did you cut LLM cost 70%?" },
+      "markets": { "label": "Gulf or EU — where can you work?", "prompt": "Gulf or EU — where can you work?" },
+      "cv": { "label": "Show me the CV", "prompt": "Show me the CV" }
+    }
+  },
+  "proof": {
+    "title": "Proof",
+    "lede": "Twelve things I have actually shipped, each with a number attached.",
+    "verified": "Verified"
+  },
+  "experience": {
+    "title": "Experience",
+    "lede": "Where the work happened.",
+    "present": "Present",
+    "stack": "Stack"
+  },
+  "projects": {
+    "title": "Projects",
+    "lede": "The systems worth a whole conversation.",
+    "summaryOnly": "Summary only",
+    "ask": "Ask about this",
+    "askPrompt": "Tell me about the {name} project.",
+    "stack": "Stack"
+  },
+  "about": {
+    "title": "About",
+    "photoAlt": "Portrait of Abdelrahman Sheta",
+    "photoPlaceholderAlt": "Placeholder portrait",
+    "languages": "Languages",
+    "basedIn": "Based in",
+    "timezone": "Timezone",
+    "availability": "Availability",
+    "engagement": "Engagement",
+    "engagementBoth": "Employment or contract",
+    "engagementEmployment": "Employment",
+    "engagementContract": "Contract",
+    "noticePeriod": "Notice period"
+  },
+  "contact": {
+    "title": "Contact",
+    "lede": "Email me, or leave a message and I will get it.",
+    "email": "Email",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "leaveMessage": "Leave a message",
+    "leaveMessagePrompt": "I would like to leave you a message.",
+    "bookCall": "Book a call"
+  },
+  "cv": {
+    "title": "Curriculum vitae",
+    "download": "Download PDF",
+    "downloadNote": "The PDF is generated from this page. No phone number is included.",
+    "summary": "Summary",
+    "experience": "Experience",
+    "skills": "Skills",
+    "education": "Education",
+    "certificates": "Certificates",
+    "highlights": "Highlights",
+    "languages": "Languages",
+    "present": "Present"
+  },
+  "privacy": {
+    "title": "Privacy",
+    "updated": "Controller and contact",
+    "controller": "The controller is Abdelrahman Sheta, Cairo, Egypt.",
+    "aiDisclosureTitle": "You are talking to an AI",
+    "aiDisclosure": "The agent on this site is an AI version of me speaking in a cloned copy of my voice. It is disclosed before the microphone opens and again at the start of every session, as required by Article 50 of the EU AI Act.",
+    "processorsTitle": "Processors",
+    "processorsLede": "These companies process data on my behalf when you use the agent.",
+    "processorPurpose": "Purpose",
+    "processorLocation": "Location",
+    "processors": {
+      "elevenlabs": { "name": "ElevenLabs", "location": "United States", "purpose": "Voice transport, speech to text and the cloned voice. Audio saving is off." },
+      "deepseek": { "name": "DeepSeek", "location": "Hangzhou, China", "purpose": "The language model that writes the answers. Your message text is sent there." },
+      "anthropic": { "name": "Anthropic", "location": "United States", "purpose": "Failover language model when DeepSeek is unavailable." },
+      "supabase": { "name": "Supabase", "location": "European Union", "purpose": "Database: sessions, pseudonymised transcripts, leads and caps." },
+      "resend": { "name": "Resend", "location": "United States", "purpose": "Sends the messages and summaries you explicitly ask for." },
+      "vercel": { "name": "Vercel", "location": "European Union (fra1)", "purpose": "Hosting and serverless execution." },
+      "cloudflare": { "name": "Cloudflare", "location": "Global", "purpose": "DNS, domain and email routing." }
+    },
+    "retentionTitle": "Retention",
+    "retention": {
+      "transcripts": "Transcripts: pseudonymised and deleted after 30 days.",
+      "leads": "Leads you submit yourself: 180 days.",
+      "probe": "Microphone capability probe events: 90 days.",
+      "audio": "Audio: never stored by me."
+    },
+    "erasureTitle": "Erasure and access",
+    "erasureBefore": "To have your data erased, email",
+    "erasureAfter": "and quote the session code shown in the console. I answer within 30 days.",
+    "legalBasisTitle": "Legal basis",
+    "legalBasis": "Legitimate interest for running the site, and your consent for the microphone, for any email you ask me to send, and for anything you type into a form."
+  },
+  "architecture": {
+    "title": "How this site works",
+    "lede": "A hiring manager's tour of the machine: what runs where, what the model is allowed to decide, and what stops it.",
+    "pitchTitle": "The pitch",
+    "pitch": "One Next.js deploy holds a static site, a text console and the brain of a voice agent. ElevenLabs handles the audio; every word the agent says comes from a prompt I compiled from my own CV and project notes, and passes a guard before it reaches you.",
+    "flowTitle": "One turn, end to end",
+    "flow": {
+      "s1": "The browser asks for a session. No token is minted until a live microphone track exists.",
+      "s2": "ElevenLabs opens a WebRTC session, transcribes your speech and calls my own LLM endpoint.",
+      "s3": "That endpoint builds a byte-identical system prompt, adds a small dynamic note, and streams from DeepSeek with Claude Haiku as failover.",
+      "s4": "A guard reads the stream before it is spoken. A blocked answer is replaced by a fixed refusal, not rewritten.",
+      "s5": "Tool calls only change what the page shows. Nothing is emailed, downloaded or stored until you click a form yourself."
+    },
+    "promptTitle": "The prompt is the product",
+    "prompt": "The knowledge lives in a private repo as structured files: facts, proof points with metrics, project notes with a public level, stories, red lines and a denylist. A build step validates them, compiles one system prompt and fails the build if a forbidden field exists at all — the logistics schema is strict, so a salary key cannot be added by accident.",
+    "notAllowedTitle": "What the model is not allowed to decide",
+    "notAllowed": {
+      "n1": "Who receives an email. Recipients are fixed in code; the model can only open a form.",
+      "n2": "Any phone number, or any email other than the one contact address.",
+      "n3": "Any salary figure, range or rate.",
+      "n4": "Anything about employers beyond what I compiled into the corpus.",
+      "n5": "Whether I am job hunting. The phrase is always \"open to conversations\"."
+    },
+    "arabicTitle": "Egyptian, not fusha",
+    "arabic": "The Arabic side speaks Masri, the dialect I actually speak, not Modern Standard Arabic. That is enforced in three places: the persona and few-shot examples in the corpus, a normaliser that fixes numerals and Latin runs before speech, and an eval set graded by a judge model plus native speakers.",
+    "evalsTitle": "Evals",
+    "evals": "Every prompt change runs an eval suite before it can ship: red-line cases that must refuse, dialect cases graded for Masri, and grounding cases that must cite the corpus. Guardrail tests run in CI and block the deploy.",
+    "privacyTitle": "Privacy by construction",
+    "privacy": "Audio is never stored by me. Transcripts are pseudonymised with a daily-salted hash and deleted after 30 days. Voice minutes are capped in Postgres — counted from rows, never from process memory — with a kill switch and a spend ceiling.",
+    "changeTitle": "What I would change",
+    "change": "Sending text to a model hosted in China is the sharpest trade-off here, and it is disclosed on the privacy page. If the dialect quality holds on a model with a European or US home, that is the first thing I move.",
+    "numbersTitle": "Live numbers",
+    "numbersNote": "These fill in once the agent is live.",
+    "numbers": {
+      "dialect": "Masri dialect pass rate",
+      "latency": "Voice p50 latency",
+      "cost": "Cost per conversation",
+      "guard": "Guard interventions"
+    },
+    "placeholder": "—"
+  },
+  "notFound": {
+    "title": "That page does not exist",
+    "lede": "The link may be old, or I may have moved something.",
+    "home": "Back to the homepage"
+  },
+  "footer": {
+    "rights": "Code MIT. Content and photo all rights reserved.",
+    "builtWith": "Built in Cairo."
+  },
+  "og": {
+    "tagline": "AI engineer — voice agents, retrieval, cost-bounded inference",
+    "cta": "Talk to an AI version of me"
+  }
+}
