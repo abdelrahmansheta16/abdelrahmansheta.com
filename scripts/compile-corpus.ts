@@ -7,6 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { compileCorpus, renderGeneratedModule } from "../lib/corpus/compile";
 import { loadCorpus } from "../lib/corpus/load";
+import { findPhoneNumbersInText } from "libphonenumber-js";
 import type { CorpusSources } from "../lib/corpus/load";
 import { fetchCorpus } from "./fetch-corpus";
 
@@ -35,30 +36,57 @@ export async function resolveCorpusDir(env: Record<string, string | undefined> =
  * Uses the deterministic guard as the corpus lint when area A has implemented it. The canary is passed
  * empty on purpose: the guard's canary rule would otherwise fire on the marker the prompt itself carries.
  */
-async function tryGuardLint(sources: CorpusSources): Promise<{ lint?: (t: string) => string[]; warning?: string }> {
+/**
+ * The corpus lint uses the same guard as runtime, but only its LEAK rules.
+ *
+ * The distinction matters. At runtime the guard judges what the agent SAYS, so "I'm actively looking"
+ * must be blocked. At build time it judges a document that must be able to QUOTE the phrases it
+ * forbids: policy/redlines.yaml carries the refusal templates ("I'm not job hunting"), the few-shots
+ * demonstrate the correct refusal, and policy/topics.yaml lists "politics" precisely so the agent
+ * deflects it. Linting those with the job_seeking and topic rules fails every build for doing the
+ * right thing. What the corpus must never contain is an actual leak, so phone, email, salary,
+ * confidential and canary stay fatal. The allowlists come from buildGuardConfig, so the build and
+ * the running agent can never disagree about which CV figures are public.
+ */
+const LEAK_RULES = new Set(["email", "salary", "confidential", "canary"]);
+
+/**
+ * Build-time phone detection, deliberately narrower than the runtime rule.
+ *
+ * The runtime guard also blocks on loose digit DENSITY, which is the right anti-evasion heuristic for
+ * one spoken sentence but wrong for a static document: a real CV bullet ("2,100+ React components ...
+ * 22,000+ accounts ... 38,000+ orders") trips it, and so does the prompt's own 16-hex canary marker.
+ * In an authored document a leaked number is contiguous or parseable, so that is what we look for.
+ * The owner's real numbers are on policy/denylist.txt as well, caught by the confidential rule.
+ */
+function findPhoneLeak(line: string): boolean {
+  const digitsOnly = line.replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[\u06f0-\u06f9]/g, (d) => String(d.charCodeAt(0) - 0x06f0));
+  // A contiguous run of 7+ digits, optionally broken by single spaces/dashes/dots between groups.
+  if (/(?:\d[ .-]?){7,}/.test(digitsOnly.replace(/\b(?:19|20)\d{2}\b/g, " "))) return true;
+  return findPhoneNumbersInText(digitsOnly, "EG").length > 0;
+}
+
+async function tryGuardLint(
+  sources: CorpusSources,
+): Promise<{ lint?: (t: string) => string[]; warning?: string }> {
   try {
     const { createGuard } = await import("../lib/brain/guard");
-    const refusal = (id: string) => {
-      const found = sources.redlines.find((r) => r.id === id);
-      return { en: found?.refusal_en ?? "", ar: found?.refusal_ar ?? "" };
-    };
-    const guard = createGuard({
-      denylist: sources.denylist,
-      allowedEmails: [sources.links.contact_email],
-      allowedMetrics: sources.proofPoints.map((p) => p.metric),
-      canary: "",
-      refusals: {
-        phone: refusal("contact"),
-        email: refusal("contact"),
-        salary: refusal("salary"),
-        job_seeking: refusal("job_seeking"),
-        confidential: refusal("confidential"),
-        topic: { en: sources.topics.deflect_en, ar: sources.topics.deflect_ar },
-        generic: { en: sources.topics.deflect_en, ar: sources.topics.deflect_ar },
+    const { buildGuardConfig } = await import("../lib/corpus/compile");
+    // canary "" on purpose: the compiled prompt carries the marker by design.
+    const guard = createGuard({ ...buildGuardConfig(sources, ""), canary: "" });
+    guard.lint("warm up");
+    return {
+      lint: (text: string) => {
+        const fired = new Set<string>();
+        for (const line of text.split("\n")) {
+          if (!line.trim()) continue;
+          for (const rule of guard.lint(line)) if (LEAK_RULES.has(rule)) fired.add(rule);
+          if (findPhoneLeak(line)) fired.add("phone");
+        }
+        return [...fired];
       },
-      topics: sources.topics.deflect,
-    });
-    return { lint: (text: string) => guard.lint(text) };
+    };
   } catch (error) {
     return { warning: `guard lint skipped: ${(error as Error).message}` };
   }

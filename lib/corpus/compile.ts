@@ -1,7 +1,8 @@
 /** Corpus compiler API. Area B. scripts/compile-corpus.ts is a thin CLI over this. */
 import { createHash } from "node:crypto";
 import { getEncoding } from "js-tiktoken";
-import type { CompiledCorpus } from "./schema";
+import type { CompiledCorpus, Redline } from "./schema";
+import type { GuardConfig } from "@/lib/brain/guard";
 import { loadCorpus } from "./load";
 import type { CorpusSources } from "./load";
 import { collectStrings, findAllowlistViolations, findDenylistHits, findDigitHits } from "./lint";
@@ -148,6 +149,79 @@ export function estimateTokens(text: string): number {
   return getEncoding("o200k_base").encode(text).length;
 }
 
+/**
+ * Public CV figures the agent is allowed to say. Without these the phone and salary rules fire on
+ * ordinary answers ("we run 2,100 endpoints at 99.95% uptime"). Longest forms first so the guard
+ * masks the whole phrase, not just the bare number.
+ */
+function guardAllowedMetrics(sources: CorpusSources): string[] {
+  const base = [
+    "2,100+ REST endpoints",
+    "2,100+ React components",
+    "2,100 endpoints",
+    "99.95% uptime",
+    "$1.2 billion",
+    "$1.2B TVL",
+    "$1.2B",
+    "22,000+ customer accounts",
+    "38,000+ orders",
+    "45,000+ lines",
+    "7,500+ monthly active users",
+    "6,500+ automated tests",
+    "350+ Alembic migrations",
+    "600+ ORM models",
+    "160+ scheduled jobs",
+    "144 REST endpoints",
+    "1,000+ transactions",
+    "22,000",
+    "38,000",
+    "45,000",
+    "7,500",
+    "6,500",
+    "2,100",
+    "1,000",
+    "99.95%",
+    "70%",
+  ];
+  const fromMetrics = sources.proofPoints.map((p) => p.metric);
+  return [...new Set([...base, ...fromMetrics])].sort((a, b) => b.length - a.length);
+}
+
+/**
+ * The guard's runtime configuration. Built from the same sources as the prompt so build-time lint and
+ * runtime enforcement can never disagree. `canary` is the real marker here: at runtime the guard must
+ * block an assistant sentence that recites it. The build-time lint deliberately passes "" instead,
+ * because the compiled prompt contains the marker by design.
+ */
+export function buildGuardConfig(sources: CorpusSources, systemPrompt: string): GuardConfig {
+  const byId = new Map(sources.redlines.map((r) => [r.id, r]));
+  const generic = {
+    en: "I can't go into that here. Ask me about the work instead.",
+    ar: "مش هقدر أدخل في ده هنا. اسألني عن الشغل أحسن.",
+  };
+  const pick = (id: Redline["id"]) => {
+    const r = byId.get(id);
+    return r ? { en: r.refusal_en, ar: r.refusal_ar } : generic;
+  };
+  const marker = /Internal marker: ([0-9a-f]{16})/.exec(systemPrompt);
+  return {
+    denylist: sources.denylist,
+    allowedEmails: [sources.links.contact_email, sources.links.legal_email],
+    allowedMetrics: guardAllowedMetrics(sources),
+    canary: marker ? marker[1] : "",
+    refusals: {
+      phone: pick("contact"),
+      email: pick("contact"),
+      salary: pick("salary"),
+      confidential: pick("confidential"),
+      job_seeking: pick("job_seeking"),
+      topic: { en: sources.topics.deflect_en, ar: sources.topics.deflect_ar },
+      generic,
+    },
+    topics: sources.topics.deflect,
+  };
+}
+
 export async function compileCorpus(opts: CompileOptions): Promise<CompileResult> {
   const { sources, warnings } = await loadCorpus(opts.dir);
   const systemPrompt = renderSystemPrompt(sources);
@@ -180,6 +254,7 @@ export async function compileCorpus(opts: CompileOptions): Promise<CompileResult
     projects: sources.projects.map(({ file: _file, ...project }) => project),
     consent: { en: CONSENT.en, ar: CONSENT.ar },
     disclosure: { en: DISCLOSURE.en, ar: DISCLOSURE.ar },
+    guard: buildGuardConfig(sources, systemPrompt),
   };
 
   return { corpus, warnings };
@@ -194,6 +269,8 @@ export function renderGeneratedModule(corpus: CompiledCorpus): string {
     `const corpus: CompiledCorpus = ${JSON.stringify(corpus, null, 2)};`,
     "",
     "export default corpus;",
+    "export const CORPUS = corpus;",
+    "export const GUARD_CONFIG = corpus.guard;",
     `export const CORPUS_VERSION = ${JSON.stringify(corpus.version)};`,
     "export const SYSTEM_PROMPT = corpus.systemPrompt;",
     "",

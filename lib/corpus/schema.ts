@@ -1,6 +1,7 @@
 /** zod schemas for every file in the private corpus repo. knowledge.example/ must validate against these too. */
 import { z } from "zod";
 import { PROJECT_SLUGS } from "@/lib/tools/schema";
+import type { GuardConfig } from "@/lib/brain/guard";
 
 const ym = z.string().regex(/^\d{4}(-\d{2})?$/);
 
@@ -161,4 +162,6 @@ export interface CompiledCorpus {
   projects: Array<ProjectFrontmatter & { body: string }>;
   consent: { en: string; ar: string };
   disclosure: { en: string; ar: string };
+  /** Runtime configuration for the red-line guard, derived from the same sources as the prompt. */
+  guard: GuardConfig;
 }
