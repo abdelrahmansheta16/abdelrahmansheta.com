@@ -36,6 +36,9 @@ export interface ConsoleOpenDetail {
 
 const SESSION_SECONDS = 240;
 
+/** Mirrors the server ceiling in app/api/chat/route.ts. */
+const MAX_TOOL_ROUNDS = 3;
+
 function mmss(seconds: number): string {
   const clamped = Math.max(0, Math.floor(seconds));
   return `${Math.floor(clamped / 60)}:${String(clamped % 60).padStart(2, "0")}`;
@@ -103,7 +106,18 @@ export default function Console({
 
   const { messages, sendMessage, setMessages, status, addToolOutput, error } = useChat<UIMessage>({
     transport,
-    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    // Bounded on purpose. The server refuses tools past its own ceiling, which is what actually stops
+    // the spend; this keeps the UI from firing pointless round trips before it gets there.
+    sendAutomaticallyWhen: ({ messages: history }) => {
+      if (!lastAssistantMessageIsCompleteWithToolCalls({ messages: history })) return false;
+      let rounds = 0;
+      for (let i = history.length - 1; i >= 0; i -= 1) {
+        const m = history[i];
+        if (m === undefined || m.role === "user") break;
+        if (m.role === "assistant" && m.parts.some((p) => p.type.startsWith("tool-"))) rounds += 1;
+      }
+      return rounds < MAX_TOOL_ROUNDS;
+    },
     onToolCall: ({ toolCall }) => {
       const outcome = reduceToolCall(toolCall.toolName, toolCall.input);
       for (const effect of outcome.effects) applyEffect(effect, onLocaleEffect);

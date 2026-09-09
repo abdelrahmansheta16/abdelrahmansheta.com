@@ -21,6 +21,9 @@ import { LOCALES, type Locale } from "@/lib/tools/schema";
 import { toChatMessages } from "@/app/api/_lib/messages";
 import type { ChatMessage, Usage } from "@/lib/brain/types";
 
+/** Tool rounds allowed per visitor question before the model must answer in text. */
+const MAX_TOOL_ROUNDS = 3;
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -89,6 +92,20 @@ export async function POST(request: Request): Promise<Response> {
   const messages: ChatMessage[] =
     history[0]?.role === "system" ? history : [{ role: "system", content: "" }, ...history];
 
+  /**
+   * How many assistant turns since the visitor last spoke ended in a tool call. The client resubmits
+   * on every such turn, so without a ceiling one question can cost a dozen full-prompt calls; a live
+   * run of a single question produced sixteen before this existed. Past the ceiling the model is
+   * offered no tools, so it has to answer in words and the exchange ends.
+   */
+  let toolRounds = 0;
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const m = history[i];
+    if (m === undefined || m.role === "user") break;
+    if (m.role === "assistant" && m.tool_calls !== undefined && m.tool_calls.length > 0) toolRounds += 1;
+  }
+  const suppressTools = toolRounds >= MAX_TOOL_ROUNDS;
+
   const lastUser = [...history].reverse().find((m) => m.role === "user");
   if (sessionId !== null && lastUser?.content != null) {
     await recordTurn(db, { sessionId, role: "user", lang: locale, content: lastUser.content });
@@ -114,6 +131,7 @@ export async function POST(request: Request): Promise<Response> {
         providers: provider,
         guard: guard(),
         corpus: brainCorpus(),
+        suppressTools,
         signal: request.signal,
       })) {
         switch (event.type) {

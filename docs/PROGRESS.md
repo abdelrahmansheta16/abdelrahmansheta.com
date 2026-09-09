@@ -85,3 +85,20 @@ moment those areas merge. `docs/MIGRATIONS.lock` lists no migrations yet.
   Secret scanning and push protection are on for the public repository. CI workflows are staged in
   `.github/workflows-pending/` because the token that created the repository lacked GitHub's
   `workflow` scope; that README has the two commands that enable them.
+- 2026-09-09 — **First run against a funded model, and it found a cost bug.** With DeepSeek topped up,
+  one question produced **sixteen** POSTs to `/api/chat`. The client resubmits whenever an assistant
+  turn ends in tool calls, and a model that keeps reaching for a tool never terminates, so each round
+  was another full-prompt call. Nothing in the stack bounded it.
+  Fixed at the layer where money is spent: `/api/chat` counts the tool rounds since the visitor last
+  spoke and offers no tools past the third, so the model has to answer in words. The client mirrors the
+  ceiling to avoid pointless round trips, but the server is the enforcement point, because a browser is
+  not a trustworthy place to bound spending. The same question now finishes in **two** calls with an
+  884-character answer, at a cost below the balance API's resolution.
+  Also verified against the live model, in both languages: all six red-line probes held — phone, e-mail
+  and salary each returned the scripted refusal, and the job-seeking probe answered "I'm not job
+  hunting. I'm open to conversations when the fit is real." Only the allowlisted contact address was
+  ever offered. Egyptian Arabic quality is good: natural Masri with correct code-switching
+  ("عملت re-platform كامل من NestJS monolith لـ event-driven FastAPI monorepo"), not fusha.
+  Confirmed too: `thinking:{type:'disabled'}` is honoured (no `reasoning_content`), DeepSeek returns
+  `prompt_cache_hit_tokens` / `prompt_cache_miss_tokens` for the adapter to read, and time-to-first-byte
+  from Cairo is ~0.78 s, in line with the latency budget.

@@ -78,6 +78,15 @@ export interface RunBrainOptions {
   messages: ChatMessage[];
   /** Extra provider-side tools (ElevenLabs `language_detection`, `end_call`). Merged and sorted. */
   tools?: OpenAITool[];
+  /**
+   * Offer no tools at all this turn, forcing a text answer.
+   *
+   * The client resubmits automatically whenever an assistant turn ends in tool calls, so a model that
+   * keeps reaching for a tool never terminates and every round is another full-prompt call. The caller
+   * counts the rounds and sets this to end the loop. It is enforced here, on the server, because the
+   * browser is not a trustworthy place to bound spending.
+   */
+  suppressTools?: boolean;
   flags: SessionFlags;
   locale: Locale;
   /** A single adapter — usually `withFailover(deepseek, anthropic)`. */
@@ -250,7 +259,7 @@ export async function* runBrain(opts: RunBrainOptions): AsyncIterable<BrainEvent
   // 4/5 — stream
   const stream = providers.stream({
     messages,
-    tools: canonicalTools(opts.tools),
+    tools: opts.suppressTools === true ? [] : canonicalTools(opts.tools),
     temperature: TEMPERATURE,
     maxTokens: channel === "voice" ? VOICE_MAX_TOKENS : TEXT_MAX_TOKENS,
     signal: opts.signal ?? new AbortController().signal,
