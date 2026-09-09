@@ -71,3 +71,17 @@ moment those areas merge. `docs/MIGRATIONS.lock` lists no migrations yet.
   and the stream ends with "The answer stopped early. Try asking again." over valid SSE. Proving the
   fallback actually *switches* rather than merely failing needs `ANTHROPIC_API_KEY`, which is an
   owner action, as is topping up DeepSeek.
+- 2026-09-09 — **Published.** Code at `abdelrahmansheta16/abdelrahmansheta.com` (public), corpus at
+  `abdelrahmansheta16/portfolio-corpus` (private). The name `portfolio` was already taken by a 2023
+  site, which was left untouched.
+  Three things were fixed before publishing, because a public repository is not reversible:
+  * A real mobile number was in use as denylist test data. The denylist exists to keep exactly that
+    number out of the prompt, so publishing it would have defeated the thing under test.
+  * The internal planning documents recorded a job search and carried a personal address. They moved
+    to the private repository and `docs/ARCHITECTURE.md` replaced them, keeping the section numbers
+    the source comments cite.
+  * Both were purged from every commit, not just from the tip, and verified absent by scanning every
+    blob in the rewritten history.
+  Secret scanning and push protection are on for the public repository. CI workflows are staged in
+  `.github/workflows-pending/` because the token that created the repository lacked GitHub's
+  `workflow` scope; that README has the two commands that enable them.
