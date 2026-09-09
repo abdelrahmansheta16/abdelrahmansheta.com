@@ -1,0 +1,9 @@
+# Append-only migration lock. Format is `shasum -a 256` output, one line per applied migration.
+#
+# Regenerate after appending a NEW migration (never after editing an existing one):
+#
+#     ( head -n 6 docs/MIGRATIONS.lock ; shasum -a 256 supabase/migrations/*.sql ) > /tmp/m.lock \
+#       && mv /tmp/m.lock docs/MIGRATIONS.lock
+#
+# tests/guardrails/05-voice-caps.test.ts fails when a listed file's hash changes or the file is gone.
+# No migrations are listed yet: supabase/migrations lands with the database area.

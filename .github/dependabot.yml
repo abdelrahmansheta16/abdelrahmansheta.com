@@ -1,0 +1,30 @@
+# Weekly dependency updates for npm and GitHub Actions. Grouped so review stays cheap.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      production:
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+      development:
+        dependency-type: "development"
+        update-types: ["minor", "patch"]
+    ignore:
+      # Pinned deliberately (see docs/PLAN.md 4.1): the voice SDK and Next are upgraded by hand
+      # after a manual iOS Safari smoke test.
+      - dependency-name: "@elevenlabs/client"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3

@@ -1,0 +1,14 @@
+# Build output and generated artefacts — never formatted, never linted.
+.next/
+out/
+build/
+coverage/
+node_modules/
+pnpm-lock.yaml
+next-env.d.ts
+*.tsbuildinfo
+public/
+lib/corpus/corpus.generated.ts
+generated/
+scripts/eval/.cache/
+docs/MIGRATIONS.lock
