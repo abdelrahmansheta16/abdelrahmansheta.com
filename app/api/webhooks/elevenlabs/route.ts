@@ -2,7 +2,7 @@
  * POST /api/webhooks/elevenlabs — the post-call webhook. This is where a voice session is reconciled:
  * the real duration replaces the 240 s reservation, the ElevenLabs minutes land in the spend ledger,
  * and every agent turn is re-linted so a red line that slipped past the streaming guard is at least
- * recorded (docs/PLAN.md 4.3 step 10).
+ * recorded (docs/ARCHITECTURE.md 4.3 step 10).
  *
  * Verification uses the vendor's own `webhooks.constructEvent`, which checks the `t=…,v0=…` HMAC in the
  * `ElevenLabs-Signature` header against the RAW body and rejects timestamps older than 30 minutes. The

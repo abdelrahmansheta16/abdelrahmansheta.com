@@ -1,6 +1,6 @@
 # Recording protocol — voice clone
 
-Working checklist for the ElevenLabs voice clone, from `docs/PLAN.md` section 5 and the week-1
+Working checklist for the ElevenLabs voice clone, from `docs/ARCHITECTURE.md` section 5 and the week-1
 bake-off protocol. Work top to bottom; do not skip the listening test.
 
 Raw WAVs are archived **offline and encrypted**. They never enter this repo, the private corpus

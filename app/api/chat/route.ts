@@ -4,7 +4,7 @@
  *
  * Text is the fallback channel: when voice is capped, the database is paused or ElevenLabs is down, this
  * route must keep answering. So every database call here is best-effort and a failure degrades to
- * "no session row, no logging" rather than an error page (docs/PLAN.md 4.4).
+ * "no session row, no logging" rather than an error page (docs/ARCHITECTURE.md 4.4).
  *
  * The tool catalogue is client-side only — no tool in this product has a server side effect, and every
  * e-mail or download happens after a human click on a fixed-recipient form (invariant 7).

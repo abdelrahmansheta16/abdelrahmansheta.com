@@ -3,7 +3,7 @@
  * /api/chat (AI SDK text console, channel=text) call `runBrain` with the same corpus, the same guard
  * and the same tool catalogue, so a red line can never be true in one channel and false in the other.
  *
- * Order of operations (docs/PLAN.md 4.3 step 6-7):
+ * Order of operations (docs/ARCHITECTURE.md 4.3 step 6-7):
  *   1. messages[0] must be the system slot; swap in CORPUS_STATIC (merge, never lose, on mismatch)
  *   2. append SESSION_CONTEXT as a TRAILING system message — invariant 8 keeps dynamic data out of the
  *      cached prefix, so it goes last, not at index 1

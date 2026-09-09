@@ -6,7 +6,7 @@
  *
  * Nothing here throws for the caller's benefit: the routes decide what a DB failure means. Rate-limit
  * helpers therefore return a permissive answer when the database is unreachable — text chat must keep
- * working when Supabase is paused (docs/PLAN.md 4.4), while the voice mint route fails closed.
+ * working when Supabase is paused (docs/ARCHITECTURE.md 4.4), while the voice mint route fails closed.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Channel, SessionFlags } from "@/lib/brain/types";
@@ -107,7 +107,7 @@ export async function updateSessionFlags(
   await db.from("sessions").update(patch).eq("id", sessionId);
 }
 
-/** A session is usable for a side effect only while it is fresh (docs/PLAN.md 4.5). */
+/** A session is usable for a side effect only while it is fresh (docs/ARCHITECTURE.md 4.5). */
 export function isSessionFresh(session: SessionRow, maxAgeMs = 24 * 60 * 60 * 1000): boolean {
   const started = Date.parse(session.started_at);
   return Number.isFinite(started) && Date.now() - started <= maxAgeMs;
@@ -336,7 +336,7 @@ export async function insertMessageIn(
   return error === null;
 }
 
-/** Only the digest of the visitor's address is ever stored (docs/PLAN.md 4.5). */
+/** Only the digest of the visitor's address is ever stored (docs/ARCHITECTURE.md 4.5). */
 export async function insertSummaryOut(
   db: SupabaseClient,
   input: { sessionId: string; emailSha256: string },

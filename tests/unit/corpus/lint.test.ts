@@ -35,6 +35,8 @@ describe("parseListFile", () => {
 });
 
 describe("findDenylistHits", () => {
+  // Fixtures use a made-up number. The denylist exists to keep a REAL number out of the prompt,
+  // so putting one in a public test file would defeat the thing being tested.
   const denylist = ["01000000000", "someone@example.com", "0100 000 0000"];
 
   it("finds an ASCII match regardless of case", () => {
@@ -46,7 +48,7 @@ describe("findDenylistHits", () => {
   });
 
   it("finds a spaced number after whitespace collapsing", () => {
-    expect(findDenylistHits("call   0103   383   4714 now", denylist)).toContain("0100 000 0000");
+    expect(findDenylistHits("call   0100   000   0000 now", denylist)).toContain("0100 000 0000");
   });
 
   it("returns nothing for clean text", () => {

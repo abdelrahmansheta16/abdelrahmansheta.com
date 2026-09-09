@@ -5,6 +5,6 @@
 #     ( head -n 6 docs/MIGRATIONS.lock ; shasum -a 256 supabase/migrations/*.sql ) > /tmp/m.lock \
 #       && mv /tmp/m.lock docs/MIGRATIONS.lock
 #
-b64d15509f45c5483eb08aa5b793829a2ead2694ebb05de858670ecc1bfadf6b  supabase/migrations/0001_init.sql
-8f9101bb80c31c002ba04b6f11b06abfc2de6a3c049e121f0e55e1369db1baa1  supabase/migrations/0002_functions.sql
+592cc0f90e68d0a47e0285e498ae92f311160b92fb1585dd78d91de58bc2f6f7  supabase/migrations/0001_init.sql
+30026d0d9fb9d78b02d50ed9b2e021716a1d5084229b57718a1075990b7232ce  supabase/migrations/0002_functions.sql
 28fadb7954af231184ea3c8790958d24c34db52d70c9c2fdf22007664718b391  supabase/migrations/0003_cron.sql

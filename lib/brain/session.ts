@@ -111,7 +111,7 @@ export async function recordGuardEvent(
 
 /**
  * Rough per-turn cost for the spend ledger. DeepSeek V4 Flash off-peak rates per MTok
- * (docs/PLAN.md 8); Haiku 4.5 list price. Deliberately an estimate: the authoritative number is the
+ * (docs/ARCHITECTURE.md 8); Haiku 4.5 list price. Deliberately an estimate: the authoritative number is the
  * vendor invoice, and the ledger exists to trip the $27/$30 rules early, not to do accounting.
  */
 export function estimateUsd(

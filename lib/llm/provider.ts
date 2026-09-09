@@ -1,7 +1,7 @@
 /**
  * Provider adapters over the OpenAI-compatible shape. DeepSeek direct is primary; Anthropic Haiku 4.5 is
  * failover. Everything upstream of this file speaks `ProviderRequest` / `ProviderEvent`, so swapping a
- * vendor is a config change (docs/PLAN.md 8).
+ * vendor is a config change (docs/ARCHITECTURE.md 8).
  *
  * Two DeepSeek-specific rules are enforced here and nowhere else:
  *   - `thinking: {type:'disabled'}` on every request (thinking is ON by default and costs 5-15 s TTFT);

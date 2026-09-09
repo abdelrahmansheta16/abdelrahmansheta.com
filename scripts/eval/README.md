@@ -23,7 +23,7 @@ the owner fills in the real probes. Until then a green run means nothing.
 | `tools`           | 30 should-call + 30 should-not          | precision ≥ 95%, JSON leakage 0                            |
 | `language-switch` | 10 per direction                        | follows within one turn, Arabizi answered in Arabic script |
 
-Primary-LLM rule (docs/PLAN.md 4.8): DeepSeek stays primary only if it scores ≥ Haiku − 0.3 on
+Primary-LLM rule (docs/ARCHITECTURE.md 4.8): DeepSeek stays primary only if it scores ≥ Haiku − 0.3 on
 blind authenticity, with zero CV hallucinations, zero post-guard breaches and tool precision ≥ 95%.
 Otherwise Haiku is promoted.
 

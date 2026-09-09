@@ -1,5 +1,5 @@
 -- 0002_functions.sql — the cap, settle, email and housekeeping functions.
--- The caps live here, not in application code (docs/PLAN.md 4.9): they are counted from rows and
+-- The caps live here, not in application code (docs/ARCHITECTURE.md 4.9): they are counted from rows and
 -- serialised by SELECT ... FOR UPDATE on today's daily_budgets row.
 
 -- ---------------------------------------------------------------------------

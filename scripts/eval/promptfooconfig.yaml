@@ -1,4 +1,4 @@
-# promptfoo configuration for the five eval suites in docs/PLAN.md 4.8.
+# promptfoo configuration for the five eval suites in docs/ARCHITECTURE.md 4.8.
 # Both arms hit the SAME deployed adapter so the prompt, the guard and the tool policy under test
 # are the ones that actually ship; `config.llm` pins which model the adapter routes to.
 #

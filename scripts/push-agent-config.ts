@@ -1,5 +1,5 @@
 /**
- * Builds and pushes the ElevenLabs Agent configuration from docs/PLAN.md 4.1.
+ * Builds and pushes the ElevenLabs Agent configuration from docs/ARCHITECTURE.md 4.1.
  * The agent is NEVER hand-edited in the dashboard: this file is the source of truth and
  * tests/guardrails/09-agent-config.test.ts asserts the safety-relevant flags without network.
  *

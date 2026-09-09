@@ -3,13 +3,13 @@
  *
  * This is the money route: every token it issues can cost up to four minutes of ElevenLabs time. It
  * therefore fails CLOSED. No database, no reservation, no token. The order below is deliberate and
- * matches docs/PLAN.md 4.3 step 2 — BotID, same-origin, cookie, reserve, then and only then talk to
+ * matches docs/ARCHITECTURE.md 4.3 step 2 — BotID, same-origin, cookie, reserve, then and only then talk to
  * ElevenLabs, so a rejected visitor never causes an upstream request.
  *
  * The client must already hold a live microphone track when it calls this (invariant 6); that is
  * enforced in the browser, because a server cannot see a MediaStream.
  *
- * Assumed upstream response shape (to be confirmed in Phase 2, docs/PLAN.md 10.4):
+ * Assumed upstream response shape (to be confirmed in Phase 2, docs/ARCHITECTURE.md 10.4):
  *   GET https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=…   with header `xi-api-key`
  *   200 { "token": "<jwt>", "conversation_id"?: "conv_…" }
  * Both `token` and the legacy `conversation_token` spelling are accepted; `conversation_id` is stored

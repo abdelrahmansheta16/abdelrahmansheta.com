@@ -1,5 +1,5 @@
 /** POST /api/voice/probe — one row per microphone feature-probe outcome. This is how we learn whether
- *  the LinkedIn in-app browser actually works, instead of guessing from user agents (docs/PLAN.md 4.3).
+ *  the LinkedIn in-app browser actually works, instead of guessing from user agents (docs/ARCHITECTURE.md 4.3).
  *  Best effort: telemetry must never make the Talk button feel slower or fail. */
 import { dbOrNull } from "@/app/api/_lib/db";
 import { insertProbeEvent } from "@/lib/db/queries";

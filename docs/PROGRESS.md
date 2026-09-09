@@ -1,6 +1,6 @@
 # Progress log (append-only, dated)
 
-- 2026-09-05 — Plan approved (docs/PLAN.md). Repo scaffolded with create-next-app (Next 16.3.4, React 19.2, Tailwind 4, pnpm 10). Private corpus seeded from the CV and the 12 proof points. Phase 0/1 in progress.
+- 2026-09-05 — Plan approved (docs/ARCHITECTURE.md). Repo scaffolded with create-next-app (Next 16.3.4, React 19.2, Tailwind 4, pnpm 10). Private corpus seeded from the CV and the 12 proof points. Phase 0/1 in progress.
 
 
 - 2026-09-09 — **Day-1 check done: DeepSeek account is out of credit.** `GET /user/balance` returns
@@ -56,7 +56,7 @@ Divergences from the plan, each forced by reality rather than preference:
 - **`scripts/build-cv` is `.mts`.** `@react-pdf/renderer`'s transitive `@react-pdf/hyphenate` has an
   import-only exports map, so the script must load as ESM.
 - **One-time prettier normalisation** of the whole tree now that `.prettierrc` exists.
-  `CLAUDE.md`, `docs/PLAN.md` and this file are prettier-ignored — their hand-made tables are
+  `CLAUDE.md`, `docs/ARCHITECTURE.md` and this file are prettier-ignored — their hand-made tables are
   load-bearing.
 
 Deferred: `knowledge.example/` and `supabase/migrations/` do not exist yet, so guardrails 1-5, 8 and

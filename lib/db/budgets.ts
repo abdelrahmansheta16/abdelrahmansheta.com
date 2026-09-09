@@ -1,6 +1,6 @@
 /**
  * Typed wrappers over the SQL cap functions. Every cap in this product is counted from Postgres rows and
- * decided inside one transaction (docs/PLAN.md 4.9) — this file only carries the arguments across and
+ * decided inside one transaction (docs/ARCHITECTURE.md 4.9) — this file only carries the arguments across and
  * gives the reasons a TypeScript type. There is deliberately no caching and no in-process counter.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";

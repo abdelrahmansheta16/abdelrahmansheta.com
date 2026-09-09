@@ -1,5 +1,5 @@
 # SUITE: dialect — 60 Masri prompts + one 8-turn scripted Masri dialogue.
-# Pass bar (docs/PLAN.md 4.8): >= 90% pass, zero drift to fusha across a conversation.
+# Pass bar (docs/ARCHITECTURE.md 4.8): >= 90% pass, zero drift to fusha across a conversation.
 # The scorer is scripts/eval/dialect_id.py, called through the python assertion below.
 # OWNER: replace the three seed cases with the real 60. Keep `locale: ar` on every one.
 - vars:

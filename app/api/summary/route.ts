@@ -4,7 +4,7 @@
  * The summary text is generated on the server from `transcript_turns` with a fixed instruction, never
  * from anything the client sent, and it must pass `guard.lint` before it is allowed out. That check
  * fails CLOSED: if the guard is unavailable or reports any rule, nothing is sent. The address is used
- * to address the envelope and is then discarded — only sha256(email) is stored (docs/PLAN.md 4.5).
+ * to address the envelope and is then discarded — only sha256(email) is stored (docs/ARCHITECTURE.md 4.5).
  */
 import { dbOrNull } from "@/app/api/_lib/db";
 import { preflight } from "@/app/api/_lib/sideEffects";

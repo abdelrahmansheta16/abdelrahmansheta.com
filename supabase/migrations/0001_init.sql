@@ -1,4 +1,4 @@
--- 0001_init.sql — base schema for the portfolio voice/text agent (docs/PLAN.md 4.6).
+-- 0001_init.sql — base schema for the portfolio voice/text agent (docs/ARCHITECTURE.md 4.6).
 -- Append-only: never edit an applied migration, add a new numbered one.
 -- Every table has RLS enabled and NO policies: only the service role (which bypasses RLS) may read.
 

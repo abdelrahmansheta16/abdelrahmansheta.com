@@ -1,6 +1,6 @@
 # abdelrahmansheta.com — project constitution
 
-Read this first, every session. The full design is in the approved plan (sections 3-10) mirrored in `docs/PLAN.md`.
+Read this first, every session. The design and its rationale are in `docs/ARCHITECTURE.md`.
 
 ## What this is
 A public portfolio site with a bilingual (English + Egyptian Arabic) voice agent in the owner's cloned
