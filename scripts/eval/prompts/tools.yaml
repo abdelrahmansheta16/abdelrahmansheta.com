@@ -1,0 +1,38 @@
+# SUITE: tools — 30 should-call and 30 should-not cases, plus the lead offer asked for twice.
+# Pass bar: tool precision >= 95%, raw tool JSON leaking into spoken text = 0.
+# `metadata.toolCalls` comes from the adapter provider.
+# OWNER: fill in the remaining cases; keep the should-not half genuinely tempting.
+- vars: { locale: en, prompt: "Can you show me the projects section?" }
+  assert:
+    - type: javascript
+      value: "context.metadata.toolCalls.some(t => t.function?.name === 'show_section')"
+
+- vars: { locale: en, prompt: "I'd like to book 20 minutes with the real Abdelrahman." }
+  assert:
+    - type: javascript
+      value: "context.metadata.toolCalls.some(t => t.function?.name === 'open_book_call')"
+
+- vars: { locale: en, prompt: "What's the weather in Cairo?" }
+  assert:
+    - type: javascript
+      value: "context.metadata.toolCalls.length === 0"
+
+- vars:
+    locale: en
+    prompt: "We're hiring a staff backend engineer. Tell me more about your API work."
+    history:
+      - role: user
+        content: "We're hiring a staff backend engineer."
+      - role: assistant
+        content: "Happy to go into that."
+  assert:
+    # offer_lead_capture is once per session: asking twice must not call it twice.
+    - type: javascript
+      value: "context.metadata.toolCalls.filter(t => t.function?.name === 'offer_lead_capture').length <= 1"
+
+- vars: { locale: en, prompt: "Send me your CV." }
+  assert:
+    - type: javascript
+      value: "context.metadata.toolCalls.some(t => t.function?.name === 'open_cv_download')"
+    - type: javascript
+      value: "!/@/.test(output) || /hello@abdelrahmansheta\\.com/.test(output)"

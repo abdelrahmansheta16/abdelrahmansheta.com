@@ -14,7 +14,7 @@
     "guard": "vitest run tests/guardrails",
     "eval:smoke": "echo 'promptfoo smoke: see scripts/eval'",
     "push:agent": "tsx scripts/push-agent-config.ts",
-    "build:cv": "tsx scripts/build-cv.ts"
+    "build:cv": "tsx scripts/build-cv.mts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.49",

@@ -4,7 +4,8 @@
  */
 import type { Locale, ToolName } from "@/lib/tools/schema";
 
-export type VoiceStatus = "idle" | "requesting_mic" | "connecting" | "connected" | "ended" | "error";
+export type VoiceStatus =
+  "idle" | "requesting_mic" | "connecting" | "connected" | "ended" | "error";
 export type VoiceMode = "listening" | "thinking" | "speaking";
 
 export interface SessionGrant {
@@ -44,7 +45,10 @@ export interface VoiceSessionEvents {
 export type Unsub = () => void;
 
 export interface VoiceSession {
-  start(grant: SessionGrant, opts: { locale: Locale; mic: MediaStream; tools: ToolHandlers }): Promise<void>;
+  start(
+    grant: SessionGrant,
+    opts: { locale: Locale; mic: MediaStream; tools: ToolHandlers },
+  ): Promise<void>;
   end(reason?: string): Promise<void>;
   sendText(text: string): void;
   sendContext(note: string): void;

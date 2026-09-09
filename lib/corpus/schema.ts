@@ -23,7 +23,9 @@ export const ProfileSchema = z.object({
   location: z.string(),
   languages: z.array(z.string()),
   summary: z.string(),
-  education: z.array(z.object({ degree: z.string(), institution: z.string(), start: z.string(), end: z.string() })),
+  education: z.array(
+    z.object({ degree: z.string(), institution: z.string(), start: z.string(), end: z.string() }),
+  ),
   certificates: z.array(z.string()).default([]),
   notable: z.array(z.string()).default([]),
   skills: z.record(z.string(), z.array(z.string())),
@@ -34,7 +36,10 @@ export const ProfileSchema = z.object({
 export const ProofPointSchema = z.object({
   id: z.string().regex(/^pp-\d{2}-[a-z-]+$/),
   lanes: z.array(z.enum(["A", "B", "C", "D"])),
-  claim: z.string().max(200).regex(/^I[\s']/, "claim must be first person"),
+  claim: z
+    .string()
+    .max(200)
+    .regex(/^I[\s']/, "claim must be first person"),
   metric: z.string().min(1).regex(/\d/, "metric must contain a number"),
   domain_tags: z.array(z.string()),
   seniority_signal: z.enum(["ic", "senior", "staff", "lead", "founder"]),
@@ -49,7 +54,10 @@ export const LogisticsSchema = z
     status_phrase_ar: z.string(),
     based_in: z.string(),
     timezone: z.string(),
-    markets: z.record(z.string(), z.object({ answer: z.string(), note_en: z.string(), note_ar: z.string() })),
+    markets: z.record(
+      z.string(),
+      z.object({ answer: z.string(), note_en: z.string(), note_ar: z.string() }),
+    ),
     overlap: z.record(z.string(), z.string()),
     engagement: z.object({ employment: z.boolean(), contract: z.boolean() }),
     notice_period: z.string(),
@@ -93,7 +101,11 @@ export const PronunciationSchema = z.object({
   tashkeel: z.string().optional(),
 });
 
-export const TopicsSchema = z.object({ deflect: z.array(z.string()), deflect_en: z.string(), deflect_ar: z.string() });
+export const TopicsSchema = z.object({
+  deflect: z.array(z.string()),
+  deflect_en: z.string(),
+  deflect_ar: z.string(),
+});
 
 export const ProjectFrontmatterSchema = z.object({
   slug: z.enum(PROJECT_SLUGS),
@@ -102,7 +114,9 @@ export const ProjectFrontmatterSchema = z.object({
   period: z.string(),
   public_level: z.enum(["public", "summary_only"]),
   stack: z.array(z.string()).default([]),
-  metrics: z.array(z.object({ text: z.string(), verified: z.boolean(), public: z.boolean() })).default([]),
+  metrics: z
+    .array(z.object({ text: z.string(), verified: z.boolean(), public: z.boolean() }))
+    .default([]),
   ui_section: z.string().default("projects"),
   spoken_en: z.string().optional(),
   spoken_ar: z.string().optional(),
@@ -138,10 +152,10 @@ export type Story = z.infer<typeof StorySchema>;
 
 /** Shape of lib/corpus/corpus.generated.ts (gitignored). */
 export interface CompiledCorpus {
-  version: string;                 // first 12 hex of sha256(systemPrompt)
+  version: string; // first 12 hex of sha256(systemPrompt)
   builtAt: string;
   tokenEstimate: number;
-  systemPrompt: string;            // CORPUS_STATIC, byte-identical for voice and text
+  systemPrompt: string; // CORPUS_STATIC, byte-identical for voice and text
   profile: Profile;
   proofPoints: ProofPoint[];
   logistics: Logistics;

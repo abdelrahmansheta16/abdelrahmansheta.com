@@ -4,15 +4,15 @@ import type { Locale } from "@/lib/tools/schema";
 export type Channel = "voice" | "text";
 
 export interface SessionFlags {
-  sessionId: string | null;          // sessions.id; null when the session row could not be resolved
+  sessionId: string | null; // sessions.id; null when the session row could not be resolved
   channel: Channel;
-  langHint: Locale;                  // from language_detection history, Arabic-script ratio, or start locale
+  langHint: Locale; // from language_detection history, Arabic-script ratio, or start locale
   leadCaptured: boolean;
   summarySent: boolean;
   messageLeft: boolean;
   guardHits: number;
   remainingSeconds: number | null;
-  greetingPlayed: boolean;           // invariant 10: repeat the disclosure in turn 1 if false
+  greetingPlayed: boolean; // invariant 10: repeat the disclosure in turn 1 if false
 }
 
 export interface ChatMessage {
@@ -20,7 +20,11 @@ export interface ChatMessage {
   content: string | null;
   name?: string;
   tool_call_id?: string;
-  tool_calls?: Array<{ id: string; type: "function"; function: { name: string; arguments: string } }>;
+  tool_calls?: Array<{
+    id: string;
+    type: "function";
+    function: { name: string; arguments: string };
+  }>;
 }
 
 export interface OpenAITool {
@@ -46,7 +50,11 @@ export interface ProviderAdapter {
 export type ProviderEvent =
   | { type: "text"; delta: string }
   | { type: "tool_call"; id: string; name: string; arguments: string }
-  | { type: "finish"; reason: "stop" | "tool_calls" | "length" | "content_filter" | "error"; usage?: Usage }
+  | {
+      type: "finish";
+      reason: "stop" | "tool_calls" | "length" | "content_filter" | "error";
+      usage?: Usage;
+    }
   | { type: "error"; error: Error };
 
 export interface Usage {
@@ -56,10 +64,11 @@ export interface Usage {
   completionTokens: number;
 }
 
-export type GuardRule = "phone" | "email" | "salary" | "job_seeking" | "confidential" | "canary" | "topic" | "json_shape";
+export type GuardRule =
+  "phone" | "email" | "salary" | "job_seeking" | "confidential" | "canary" | "topic" | "json_shape";
 
 export interface GuardVerdict {
   ok: boolean;
   rule?: GuardRule;
-  replacement?: string;              // the refusal template in the session language
+  replacement?: string; // the refusal template in the session language
 }

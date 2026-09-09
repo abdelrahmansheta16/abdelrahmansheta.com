@@ -59,9 +59,9 @@ describe("invariant 9 — tools and language detection", () => {
     expect(builtIn).toBeDefined();
     expect(builtIn?.params.systemToolType).toBe("language_detection");
     const params = builtIn?.params;
-    expect(params && "onlyAtConversationStart" in params ? params.onlyAtConversationStart : null).toBe(
-      false,
-    );
+    expect(
+      params && "onlyAtConversationStart" in params ? params.onlyAtConversationStart : null,
+    ).toBe(false);
   });
 
   it("enables end_call", () => {

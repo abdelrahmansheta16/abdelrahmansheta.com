@@ -29,7 +29,9 @@ describe.skipIf(!MIGRATIONS_READY)(
   suite("invariant 5 — voice caps live in SQL", MIGRATIONS_READY, WHY),
   () => {
     it("defines reserve_voice_session", () => {
-      expect(migrationSql()).toMatch(/create\s+(or\s+replace\s+)?function\s+[\w.]*reserve_voice_session/i);
+      expect(migrationSql()).toMatch(
+        /create\s+(or\s+replace\s+)?function\s+[\w.]*reserve_voice_session/i,
+      );
     });
 
     it("encodes the 240 s per-session reservation", () => {

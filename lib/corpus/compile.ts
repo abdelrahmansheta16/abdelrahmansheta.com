@@ -2,7 +2,7 @@
 import type { CompiledCorpus } from "./schema";
 
 export interface CompileOptions {
-  dir: string;                       // path to a corpus directory (private repo checkout or knowledge.example)
+  dir: string; // path to a corpus directory (private repo checkout or knowledge.example)
   lint?: (text: string) => string[]; // optional guard lint; every hit fails the build
 }
 

@@ -2,7 +2,10 @@
 import type { ToolName } from "@/lib/tools/schema";
 import type { SessionFlags } from "./types";
 
-export interface LeakedToolCall { name: ToolName; arguments: string }
+export interface LeakedToolCall {
+  name: ToolName;
+  arguments: string;
+}
 
 /** If `content` is (or starts with) a JSON function call for a known tool, return it; else null. */
 export function detectLeakedToolCall(_content: string): LeakedToolCall | null {

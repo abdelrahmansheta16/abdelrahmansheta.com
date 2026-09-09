@@ -63,13 +63,16 @@ describe("hygiene — .env.example documents every variable the code reads", () 
 
   it("lists every process.env.X referenced under app/, lib/ and scripts/", () => {
     const files = [
-      ...walk("app", [".ts", ".tsx"]),
-      ...walk("lib", [".ts", ".tsx"]),
-      ...walk("scripts", [".ts", ".tsx"]),
+      ...walk("app", [".ts", ".tsx", ".mts"]),
+      ...walk("lib", [".ts", ".tsx", ".mts"]),
+      ...walk("scripts", [".ts", ".tsx", ".mts"]),
     ].filter((f) => !f.endsWith(path.normalize(GENERATED)));
 
     const referenced = new Map<string, string>();
-    const patterns = [/process\.env\.([A-Za-z_][A-Za-z0-9_]*)/g, /process\.env\[["']([^"']+)["']\]/g];
+    const patterns = [
+      /process\.env\.([A-Za-z_][A-Za-z0-9_]*)/g,
+      /process\.env\[["']([^"']+)["']\]/g,
+    ];
     for (const file of files) {
       const src = readFileSync(file, "utf8");
       for (const pattern of patterns) {
@@ -104,9 +107,9 @@ describe("hygiene — .env.example documents every variable the code reads", () 
 describe("hygiene — no real contact details in the tracked tree", () => {
   it("contains no phone-number-looking literal in app/, lib/ or scripts/", () => {
     const files = [
-      ...walk("app", [".ts", ".tsx"]),
-      ...walk("lib", [".ts", ".tsx"]),
-      ...walk("scripts", [".ts", ".tsx"]),
+      ...walk("app", [".ts", ".tsx", ".mts"]),
+      ...walk("lib", [".ts", ".tsx", ".mts"]),
+      ...walk("scripts", [".ts", ".tsx", ".mts"]),
     ].filter((f) => !f.endsWith(path.normalize(GENERATED)));
 
     const hits: string[] = [];

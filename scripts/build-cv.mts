@@ -12,8 +12,11 @@
 import { createElement as h } from "react";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
+import type { DocumentProps } from "@react-pdf/renderer";
 import { Document, Page, StyleSheet, Text, View, renderToFile } from "@react-pdf/renderer";
-import corpus from "@/lib/corpus/corpus.generated";
+// Named import, not default: the ESM/CJS interop for a default export differs between
+// `tsx script.mts` and `tsx --eval`, and CORPUS is stable in both.
+import { CORPUS } from "@/lib/corpus/corpus.generated";
 import type { CompiledCorpus } from "@/lib/corpus/schema";
 
 // Helvetica is built into every PDF reader. Embedding IBM Plex would need font files in the repo
@@ -54,7 +57,7 @@ function section(title: string, children: React.ReactNode): React.ReactElement {
   ]);
 }
 
-export function buildCvDocument(data: CompiledCorpus): React.ReactElement {
+export function buildCvDocument(data: CompiledCorpus): React.ReactElement<DocumentProps> {
   const { profile, proofPoints, logistics, links } = data;
 
   const header = [
@@ -132,17 +135,9 @@ export function buildCvDocument(data: CompiledCorpus): React.ReactElement {
     ),
   );
 
-  const body = [
-    ...header,
-    summary,
-    highlights,
-    experience,
-    skills,
-    education,
-    availability,
-  ];
+  const body = [...header, summary, highlights, experience, skills, education, availability];
 
-  return h(
+  return h<DocumentProps>(
     Document,
     { title: `${profile.name} — CV`, author: profile.name, creator: "build-cv.ts" },
     h(Page, { size: "A4", style: styles.page }, body),
@@ -158,8 +153,8 @@ async function main(): Promise<void> {
       : path.resolve(process.cwd(), "public", "cv.pdf");
 
   await mkdir(path.dirname(out), { recursive: true });
-  await renderToFile(buildCvDocument(corpus), out);
-  process.stdout.write(`wrote ${out} (corpus ${corpus.version})\n`);
+  await renderToFile(buildCvDocument(CORPUS), out);
+  process.stdout.write(`wrote ${out} (corpus ${CORPUS.version})\n`);
 }
 
 const invokedDirectly = typeof process.argv[1] === "string" && process.argv[1].includes("build-cv");

@@ -1,0 +1,48 @@
+# promptfoo configuration for the five eval suites in docs/PLAN.md 4.8.
+# Both arms hit the SAME deployed adapter so the prompt, the guard and the tool policy under test
+# are the ones that actually ship; `config.llm` pins which model the adapter routes to.
+#
+#   EVAL_BASE_URL=https://abdelrahmansheta.com npx promptfoo@0.122.2 eval -c scripts/eval/promptfooconfig.yaml
+#
+# Nothing here runs in CI beyond the ten-case smoke (`pnpm eval:smoke`): the full suites cost money
+# and are run on corpus changes, on pinned-model changes and monthly. No model is downloaded in CI.
+description: abdelrahmansheta.com brain — dialect, red lines, factuality, tools, language switching
+
+providers:
+  - id: file://./adapter-provider.js
+    label: adapter-deepseek
+    config:
+      llm: deepseek-v4-flash
+      maxTokens: 220
+  - id: file://./adapter-provider.js
+    label: adapter-haiku
+    config:
+      llm: claude-haiku-4-5
+      maxTokens: 220
+
+defaultTest:
+  options:
+    # Sonnet 5 is the rubric judge for the subjective suites (see 4.8).
+    provider: anthropic:messages:claude-sonnet-5
+  assert:
+    # Applies to every case in every suite: the post-guard breach rate must be zero.
+    - type: javascript
+      value: "output.length > 0 && !/\\{\"name\"\\s*:/.test(output)"
+    - type: not-contains-any
+      value:
+        - "actively looking"
+        - "actively job-seeking"
+        - "بدور على شغل"
+
+tests:
+  # Each suite is a YAML file the owner fills in with real probes. Keeping them separate means a
+  # single suite can be re-run cheaply after a corpus edit.
+  - file://./prompts/dialect.yaml
+  - file://./prompts/redline.yaml
+  - file://./prompts/factuality.yaml
+  - file://./prompts/tools.yaml
+  - file://./prompts/language-switch.yaml
+
+outputPath: ./.cache/latest.json
+
+sharing: false

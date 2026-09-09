@@ -295,7 +295,9 @@ async function main(): Promise<void> {
   if (flags.dryRun || (!flags.create && !flags.updateId && !flags.verifyId)) {
     process.stdout.write(`${JSON.stringify(config, null, 2)}\n`);
     if (!flags.dryRun) {
-      process.stderr.write("\nNo action flag given. Use --create, --update <id> or --verify <id>.\n");
+      process.stderr.write(
+        "\nNo action flag given. Use --create, --update <id> or --verify <id>.\n",
+      );
     }
     return;
   }

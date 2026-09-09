@@ -35,59 +35,62 @@ const ALLOWED = [
   "ابعتلي على hello@abdelrahmansheta.com وهرد عليك.",
 ];
 
-describe.skipIf(!GUARD_READY)(suite("invariant 1 — contact red line", GUARD_READY, skipMsg.guard), () => {
-  let guard: Guard;
-  beforeAll(async () => {
-    guard = await loadGuard();
-  });
-
-  it.each(BLOCKED_EN)("blocks EN: %s", (sentence) => {
-    const verdict = guard.checkSentence(sentence, { locale: "en" });
-    expect(verdict.ok).toBe(false);
-    expect(["phone", "email"]).toContain(verdict.rule);
-    expect(verdict.replacement ?? "").not.toBe("");
-  });
-
-  it.each(BLOCKED_AR)("blocks AR: %s", (sentence) => {
-    const verdict = guard.checkSentence(sentence, { locale: "ar" });
-    expect(verdict.ok).toBe(false);
-    expect(["phone", "email"]).toContain(verdict.rule);
-  });
-
-  it.each(ALLOWED)("allows the allowlisted address: %s", (sentence) => {
-    expect(guard.checkSentence(sentence, { locale: "en" }).ok).toBe(true);
-  });
-
-  it("accumulates spelled digits across a turn boundary", () => {
-    const verdict = guard.checkSentence("5 5 5 0 1 4 3.", {
-      locale: "en",
-      digitCarry: "0 1 0",
+describe.skipIf(!GUARD_READY)(
+  suite("invariant 1 — contact red line", GUARD_READY, skipMsg.guard),
+  () => {
+    let guard: Guard;
+    beforeAll(async () => {
+      guard = await loadGuard();
     });
-    expect(verdict.ok).toBe(false);
-  });
-});
+
+    it.each(BLOCKED_EN)("blocks EN: %s", (sentence) => {
+      const verdict = guard.checkSentence(sentence, { locale: "en" });
+      expect(verdict.ok).toBe(false);
+      expect(["phone", "email"]).toContain(verdict.rule);
+      expect(verdict.replacement ?? "").not.toBe("");
+    });
+
+    it.each(BLOCKED_AR)("blocks AR: %s", (sentence) => {
+      const verdict = guard.checkSentence(sentence, { locale: "ar" });
+      expect(verdict.ok).toBe(false);
+      expect(["phone", "email"]).toContain(verdict.rule);
+    });
+
+    it.each(ALLOWED)("allows the allowlisted address: %s", (sentence) => {
+      expect(guard.checkSentence(sentence, { locale: "en" }).ok).toBe(true);
+    });
+
+    it("accumulates spelled digits across a turn boundary", () => {
+      const verdict = guard.checkSentence("5 5 5 0 1 4 3.", {
+        locale: "en",
+        digitCarry: "0 1 0",
+      });
+      expect(verdict.ok).toBe(false);
+    });
+  },
+);
 
 describe.skipIf(!EXAMPLE_CORPUS_READY)(
   suite("invariant 1 — the compiled prompt is clean", EXAMPLE_CORPUS_READY, skipMsg.example),
   () => {
-  let corpus: CompiledCorpus;
-  let guard: Guard | null = null;
-  beforeAll(async () => {
-    corpus = await compileExampleCorpus();
-    if (GUARD_READY) guard = await loadGuard();
-  });
+    let corpus: CompiledCorpus;
+    let guard: Guard | null = null;
+    beforeAll(async () => {
+      corpus = await compileExampleCorpus();
+      if (GUARD_READY) guard = await loadGuard();
+    });
 
-  it("lints the system prompt with zero hits", () => {
-    if (!guard) return;
-    expect(guard.lint(corpus.systemPrompt)).toEqual([]);
-  });
+    it("lints the system prompt with zero hits", () => {
+      if (!guard) return;
+      expect(guard.lint(corpus.systemPrompt)).toEqual([]);
+    });
 
-  it("carries no e-mail address other than the allowlisted one", () => {
-    const found = corpus.systemPrompt.match(/[\w.+-]+@[\w-]+\.[\w.]+/g) ?? [];
-    const unexpected = found.filter(
-      (addr) => addr !== corpus.links.contact_email && addr !== corpus.links.legal_email,
-    );
-    expect(unexpected).toEqual([]);
-  });
+    it("carries no e-mail address other than the allowlisted one", () => {
+      const found = corpus.systemPrompt.match(/[\w.+-]+@[\w-]+\.[\w.]+/g) ?? [];
+      const unexpected = found.filter(
+        (addr) => addr !== corpus.links.contact_email && addr !== corpus.links.legal_email,
+      );
+      expect(unexpected).toEqual([]);
+    });
   },
 );
