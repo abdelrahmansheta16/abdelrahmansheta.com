@@ -11,6 +11,7 @@ import {
   GUARD_READY,
   compileExampleCorpus,
   loadGuard,
+  loadExampleGuard,
   skipMsg,
   suite,
 } from "./helpers";
@@ -77,12 +78,15 @@ describe.skipIf(!EXAMPLE_CORPUS_READY)(
     let guard: Guard | null = null;
     beforeAll(async () => {
       corpus = await compileExampleCorpus();
-      if (GUARD_READY) guard = await loadGuard();
+      if (GUARD_READY) guard = await loadExampleGuard();
     });
 
-    it("lints the system prompt with zero hits", () => {
+    it("lints the system prompt with zero leaks", async () => {
       if (!guard) return;
-      expect(guard.lint(corpus.systemPrompt)).toEqual([]);
+      // The build-time lint, not the runtime rule set: the prompt must be able to quote the phrases
+      // it forbids and to name the topics it deflects. See createCorpusLint.
+      const { createCorpusLint } = await import("@/lib/corpus/lint");
+      expect(createCorpusLint(guard)(corpus.systemPrompt)).toEqual([]);
     });
 
     it("carries no e-mail address other than the allowlisted one", () => {

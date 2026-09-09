@@ -112,3 +112,46 @@ export function collectStrings(value: unknown, out: string[] = []): string[] {
   else if (value && typeof value === "object") for (const item of Object.values(value)) collectStrings(item, out);
   return out;
 }
+
+/**
+ * The build-time corpus lint, shared by scripts/compile-corpus.ts and tests/guardrails.
+ *
+ * Deliberately narrower than the runtime guard. At runtime the guard judges what the agent SAYS, so
+ * "I'm actively looking" must be blocked. At build time it judges a document that has to QUOTE the
+ * phrases it forbids: policy/redlines.yaml carries the refusal templates, the few-shots demonstrate
+ * them, and policy/topics.yaml names the deflected topics precisely so the agent deflects them.
+ * Linting those with the job_seeking and topic rules fails the build for correct content.
+ *
+ * It also runs line by line and replaces the phone rule. The runtime rule blocks on loose digit
+ * DENSITY, which is right for one spoken sentence and wrong for a 7,000-token document: a real CV
+ * bullet and the prompt's own 16-hex canary both trip it. In an authored document a leaked number is
+ * contiguous or parseable, so that is what this looks for. The owner's real numbers are on the
+ * denylist too, so the confidential rule catches them regardless.
+ */
+export const LEAK_RULES: ReadonlySet<string> = new Set([
+  "email",
+  "salary",
+  "confidential",
+  "canary",
+]);
+
+/** A contiguous run of 7+ digits (single separators allowed), ignoring 4-digit years. */
+export function looksLikePhoneNumber(line: string): boolean {
+  const ascii = line
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0));
+  return /(?:\d[ .-]?){7,}/.test(ascii.replace(/\b(?:19|20)\d{2}\b/g, " "));
+}
+
+/** Wrap a runtime guard as the build-time corpus lint. */
+export function createCorpusLint(guard: { lint(text: string): string[] }): (text: string) => string[] {
+  return (text: string) => {
+    const fired = new Set<string>();
+    for (const line of text.split("\n")) {
+      if (!line.trim()) continue;
+      for (const rule of guard.lint(line)) if (LEAK_RULES.has(rule)) fired.add(rule);
+      if (looksLikePhoneNumber(line)) fired.add("phone");
+    }
+    return [...fired];
+  };
+}

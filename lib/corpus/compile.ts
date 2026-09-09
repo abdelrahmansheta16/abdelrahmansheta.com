@@ -251,7 +251,14 @@ export async function compileCorpus(opts: CompileOptions): Promise<CompileResult
     redlines: sources.redlines,
     topics: sources.topics,
     pronunciation: sources.pronunciation,
-    projects: sources.projects.map(({ file: _file, ...project }) => project),
+    // Non-public metrics are dropped here, not just filtered at each render site. The prompt and the
+    // spine both filter already, but the compiled module is bundled into the deployed output, so a
+    // metric marked public:false would otherwise be readable in the shipped source even though no
+    // page renders it. Stripping at the compiler means it never leaves the private corpus.
+    projects: sources.projects.map(({ file: _file, ...project }) => ({
+      ...project,
+      metrics: project.metrics.filter((metric) => metric.public),
+    })),
     consent: { en: CONSENT.en, ar: CONSENT.ar },
     disclosure: { en: DISCLOSURE.en, ar: DISCLOSURE.ar },
     guard: buildGuardConfig(sources, systemPrompt),

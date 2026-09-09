@@ -74,6 +74,22 @@ export function walk(rel: string, extensions: string[]): string[] {
   return found;
 }
 
+/**
+ * Build the Guard from knowledge.example's own sources, for suites that lint the example prompt.
+ * Using the deployed GUARD_CONFIG there would allowlist the OWNER's addresses while linting the
+ * example's, so the example's own fake contact address would read as a leak.
+ */
+export async function loadExampleGuard() {
+  const [{ buildGuardConfig }, { createGuard }, { loadCorpus }] = await Promise.all([
+    import("@/lib/corpus/compile"),
+    import("@/lib/brain/guard"),
+    import("@/lib/corpus/load"),
+  ]);
+  const { sources } = await loadCorpus(repoPath(KNOWLEDGE_EXAMPLE));
+  // canary "" on purpose: the compiled prompt carries its own marker by design.
+  return createGuard({ ...buildGuardConfig(sources, ""), canary: "" });
+}
+
 /** Lazily build the Guard from the compiled GUARD_CONFIG. Only call inside a non-skipped suite. */
 export async function loadGuard() {
   const [{ createGuard }, generated] = await Promise.all([
@@ -83,18 +99,30 @@ export async function loadGuard() {
   return createGuard(generated.GUARD_CONFIG);
 }
 
-/** Compile knowledge.example/ through the real compiler. Only call inside a non-skipped suite. */
+/**
+ * Compile knowledge.example/ through the real compiler and the real guard.
+ *
+ * The guard config is derived from the EXAMPLE's own sources, not from the generated corpus: the
+ * generated one carries the owner's denylist and allowlisted addresses, so linting the example with
+ * it flags the example's own fake contact address. Deriving per corpus is also what the compiler
+ * does, so this exercises the same path a fork would take.
+ */
 export async function compileExampleCorpus() {
-  const [{ compileCorpus }, { createGuard }, generated] = await Promise.all([
-    import("@/lib/corpus/compile"),
-    import("@/lib/brain/guard"),
-    import("@/lib/corpus/corpus.generated"),
-  ]);
-  const guard = GUARD_READY ? createGuard(generated.GUARD_CONFIG) : null;
-  const { corpus } = await compileCorpus({
-    dir: repoPath(KNOWLEDGE_EXAMPLE),
-    lint: guard ? (text: string) => guard.lint(text) : undefined,
-  });
+  const [{ buildGuardConfig, compileCorpus }, { createGuard }, { loadCorpus }, { createCorpusLint }] =
+    await Promise.all([
+      import("@/lib/corpus/compile"),
+      import("@/lib/brain/guard"),
+      import("@/lib/corpus/load"),
+      import("@/lib/corpus/lint"),
+    ]);
+  const dir = repoPath(KNOWLEDGE_EXAMPLE);
+  let lint: ((text: string) => string[]) | undefined;
+  if (GUARD_READY) {
+    const { sources } = await loadCorpus(dir);
+    // canary "" on purpose: the compiled prompt carries its own marker by design.
+    lint = createCorpusLint(createGuard({ ...buildGuardConfig(sources, ""), canary: "" }));
+  }
+  const { corpus } = await compileCorpus({ dir, lint });
   return corpus;
 }
 

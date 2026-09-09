@@ -135,15 +135,49 @@ const SALARY_LEXICON_SINGLE = [
   "أجر",
   "الأجر",
   "بكام",
+  "اليومية",
+  "تعريفة",
+  "أتعاب",
+  "الأتعاب",
 ].map(normaliseForMatch);
 
-const SALARY_LEXICON_PHRASES = ["كام في الشهر", "كام في السنة"].map(normaliseForMatch);
+const SALARY_LEXICON_PHRASES = [
+  "كام في الشهر",
+  "كام في السنة",
+  "كام في اليوم",
+  "كام في الساعة",
+  "سعر اليوم",
+  "سعر الساعة",
+  "سعر الشهر",
+  "بتاخد كام",
+  "هتاخد كام",
+  "عايز كام",
+  "day rate",
+  "daily rate",
+  "hourly rate",
+  "rate card",
+].map(normaliseForMatch);
 
 const JOB_SEEKING_PHRASES = [
   "actively looking",
   "actively searching",
+  "actively seeking",
+  "actively job",
   "job hunting",
   "job hunt",
+  "job-seeking",
+  "job seeking",
+  "jobseeking",
+  "job-search",
+  "job search",
+  "seeking a job",
+  "seeking a role",
+  "seeking a position",
+  "seeking new opportunities",
+  "looking for opportunities",
+  "looking for a new role",
+  "open to work",
+  "on the market",
   "applying to",
   "applying for",
   "interviewing at",
@@ -265,7 +299,8 @@ function looksLikeMoneyToken(token: string): boolean {
   if (CURRENCY_CODES.includes(token)) return true;
   if (MONEY_WORDS.includes(token)) return true;
   if (MAGNITUDE_WORDS.includes(token)) return true;
-  return /^\d[\d.,]*k$/.test(token);
+  // Ranges keep their internal separator after tokenisation: "90-110k", "90k-110k", "1.5-2m".
+  return /^\d[\d.,]*(?:[-–—]\d[\d.,]*)*[km]?$/i.test(token) && /[km]$/i.test(token);
 }
 
 /** Longest run of consecutive spelled-out digit words, ignoring "and"/"و" connectors. */
