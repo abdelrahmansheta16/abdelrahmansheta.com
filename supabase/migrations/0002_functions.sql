@@ -265,3 +265,19 @@ begin
   end if;
 end;
 $$;
+
+-- ---------------------------------------------------------------------------
+-- increment_guard_hits: one round trip instead of read-modify-write from the app.
+-- Returns the new count so the caller can decide to close the session at 3.
+-- ---------------------------------------------------------------------------
+create or replace function public.increment_guard_hits(p_session_id uuid)
+returns integer
+language sql
+security definer
+set search_path = public
+as $$
+  update public.sessions
+     set guard_hits = guard_hits + 1
+   where id = p_session_id
+  returning guard_hits;
+$$;
