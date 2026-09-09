@@ -10,7 +10,7 @@
  * e-mail or download happens after a human click on a fixed-recipient form (invariant 7).
  */
 import { createUIMessageStream, createUIMessageStreamResponse, convertToModelMessages } from "ai";
-import type { UIMessage, ModelMessage } from "ai";
+import type { UIMessage } from "ai";
 import { runBrain } from "@/lib/brain/adapter";
 import { estimateUsd, loadFlags, recordGuardEvent, recordLlmCall, recordSpend, recordTurn } from "@/lib/brain/session";
 import { brainCorpus, guard, providers, CORPUS } from "@/app/api/_lib/brain";
@@ -18,6 +18,7 @@ import { dbOrNull } from "@/app/api/_lib/db";
 import { fail, ipHash, isHuman, visitorHash, verifyVisitorCookie, VISITOR_COOKIE } from "@/app/api/_lib/http";
 import { consumeRateSlot, createTextSession } from "@/lib/db/queries";
 import { LOCALES, type Locale } from "@/lib/tools/schema";
+import { toChatMessages } from "@/app/api/_lib/messages";
 import type { ChatMessage, Usage } from "@/lib/brain/types";
 
 export const runtime = "nodejs";
@@ -30,60 +31,6 @@ interface ChatBody {
   messages?: unknown;
   locale?: unknown;
   sessionId?: unknown;
-}
-
-function textOf(content: unknown): string {
-  if (typeof content === "string") return content;
-  if (!Array.isArray(content)) return "";
-  return content
-    .filter((p): p is { type: "text"; text: string } => {
-      return p !== null && typeof p === "object" && (p as { type?: unknown }).type === "text";
-    })
-    .map((p) => p.text)
-    .join("");
-}
-
-/** ModelMessage[] -> the OpenAI-shaped history the brain speaks. */
-export function toChatMessages(messages: ModelMessage[]): ChatMessage[] {
-  const out: ChatMessage[] = [];
-
-  for (const m of messages) {
-    if (m.role === "tool") {
-      const parts = Array.isArray(m.content) ? m.content : [];
-      for (const part of parts) {
-        const p = part as { toolCallId?: string; toolName?: string; output?: unknown };
-        out.push({
-          role: "tool",
-          content: JSON.stringify(p.output ?? ""),
-          name: p.toolName ?? "unknown",
-          tool_call_id: p.toolCallId ?? "unknown",
-        });
-      }
-      continue;
-    }
-
-    if (m.role === "assistant" && Array.isArray(m.content)) {
-      const calls = m.content
-        .filter((p): p is { type: "tool-call"; toolCallId: string; toolName: string; input: unknown } => {
-          return p !== null && typeof p === "object" && (p as { type?: unknown }).type === "tool-call";
-        })
-        .map((p) => ({
-          id: p.toolCallId,
-          type: "function" as const,
-          function: { name: p.toolName, arguments: JSON.stringify(p.input ?? {}) },
-        }));
-      out.push({
-        role: "assistant",
-        content: textOf(m.content),
-        ...(calls.length > 0 ? { tool_calls: calls } : {}),
-      });
-      continue;
-    }
-
-    out.push({ role: m.role, content: textOf(m.content) });
-  }
-
-  return out;
 }
 
 function localeOf(value: unknown): Locale {

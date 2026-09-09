@@ -437,6 +437,10 @@ export async function* firstTokenGuarded(
     }
   } finally {
     if (timer !== undefined) clearTimeout(timer);
-    if (typeof iterator.return === "function") await iterator.return(undefined);
+    // Fire and forget: a provider that is wedged mid-await would never settle `return()`, and waiting
+    // for it would turn a first-token timeout into a hang — exactly the failure we are guarding against.
+    if (typeof iterator.return === "function") {
+      void Promise.resolve(iterator.return(undefined)).catch(() => undefined);
+    }
   }
 }

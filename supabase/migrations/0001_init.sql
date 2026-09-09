@@ -4,6 +4,11 @@
 
 create extension if not exists pgcrypto;
 
+-- Note on the retention columns below: `timestamptz + interval` is only STABLE in Postgres (day and
+-- month intervals depend on the session timezone), so it cannot be used in a generated column. The
+-- `timezone('UTC', timezone('UTC', ts) + interval …)` form does the arithmetic in plain UTC, which IS
+-- immutable, and gives the same instant.
+
 -- ---------------------------------------------------------------------------
 -- sessions
 -- ---------------------------------------------------------------------------
@@ -33,7 +38,7 @@ create table if not exists public.sessions (
   message_left                boolean not null default false,
   guard_hits                  integer not null default 0,
   flags                       jsonb not null default '{}'::jsonb,
-  delete_after                timestamptz generated always as (started_at + interval '30 days') stored
+  delete_after                timestamptz generated always as (timezone('UTC', timezone('UTC', started_at) + interval '30 days')) stored
 );
 
 create index if not exists sessions_ip_hash_started_at_idx      on public.sessions (ip_hash, started_at);
@@ -55,7 +60,7 @@ create table if not exists public.transcript_turns (
   interrupted  boolean not null default false,
   ttft_ms      integer,
   created_at   timestamptz not null default now(),
-  delete_after timestamptz generated always as (created_at + interval '30 days') stored,
+  delete_after timestamptz generated always as (timezone('UTC', timezone('UTC', created_at) + interval '30 days')) stored,
   unique (session_id, idx)
 );
 
@@ -79,7 +84,7 @@ create table if not exists public.llm_calls (
   usd               numeric(10, 6) not null default 0,
   corpus_version    text,
   created_at        timestamptz not null default now(),
-  delete_after      timestamptz generated always as (created_at + interval '30 days') stored
+  delete_after      timestamptz generated always as (timezone('UTC', timezone('UTC', created_at) + interval '30 days')) stored
 );
 
 create index if not exists llm_calls_delete_after_idx on public.llm_calls (delete_after);
@@ -94,7 +99,7 @@ create table if not exists public.guard_events (
   blocked_sha256 text,
   channel        text check (channel in ('voice', 'text')),
   created_at     timestamptz not null default now(),
-  delete_after   timestamptz generated always as (created_at + interval '30 days') stored
+  delete_after   timestamptz generated always as (timezone('UTC', timezone('UTC', created_at) + interval '30 days')) stored
 );
 
 create index if not exists guard_events_delete_after_idx on public.guard_events (delete_after);
@@ -112,7 +117,7 @@ create table if not exists public.spend_events (
   idempotency_key text unique,
   settled_at      timestamptz,
   created_at      timestamptz not null default now(),
-  delete_after    timestamptz generated always as (created_at + interval '400 days') stored
+  delete_after    timestamptz generated always as (timezone('UTC', timezone('UTC', created_at) + interval '400 days')) stored
 );
 
 create index if not exists spend_events_created_at_idx   on public.spend_events (created_at);
@@ -155,7 +160,7 @@ create table if not exists public.leads (
   note         text,
   consent_at   timestamptz not null,
   created_at   timestamptz not null default now(),
-  delete_after timestamptz generated always as (created_at + interval '180 days') stored
+  delete_after timestamptz generated always as (timezone('UTC', timezone('UTC', created_at) + interval '180 days')) stored
 );
 
 create index if not exists leads_delete_after_idx on public.leads (delete_after);
@@ -167,7 +172,7 @@ create table if not exists public.messages_in (
   email        text not null,
   body         text not null,
   created_at   timestamptz not null default now(),
-  delete_after timestamptz generated always as (created_at + interval '30 days') stored
+  delete_after timestamptz generated always as (timezone('UTC', timezone('UTC', created_at) + interval '30 days')) stored
 );
 
 create index if not exists messages_in_delete_after_idx on public.messages_in (delete_after);
@@ -180,7 +185,7 @@ create table if not exists public.summaries_out (
   consent_at   timestamptz not null,
   sent_at      timestamptz,
   created_at   timestamptz not null default now(),
-  delete_after timestamptz generated always as (created_at + interval '30 days') stored
+  delete_after timestamptz generated always as (timezone('UTC', timezone('UTC', created_at) + interval '30 days')) stored
 );
 
 create index if not exists summaries_out_delete_after_idx on public.summaries_out (delete_after);
@@ -194,7 +199,7 @@ create table if not exists public.probe_events (
   os_version   text,
   outcome      text not null,
   created_at   timestamptz not null default now(),
-  delete_after timestamptz generated always as (created_at + interval '90 days') stored
+  delete_after timestamptz generated always as (timezone('UTC', timezone('UTC', created_at) + interval '90 days')) stored
 );
 
 create index if not exists probe_events_delete_after_idx on public.probe_events (delete_after);
@@ -205,7 +210,7 @@ create table if not exists public.rate_events (
   kind         text not null,
   ip_hash      text not null,
   created_at   timestamptz not null default now(),
-  delete_after timestamptz generated always as (created_at + interval '2 days') stored
+  delete_after timestamptz generated always as (timezone('UTC', timezone('UTC', created_at) + interval '2 days')) stored
 );
 
 create index if not exists rate_events_kind_ip_hash_created_at_idx on public.rate_events (kind, ip_hash, created_at);
