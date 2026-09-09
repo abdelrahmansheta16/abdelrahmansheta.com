@@ -15,7 +15,8 @@ something the example does not document.
 | ------------------------------------------------------------ | ------------------- | --------------------------------------------------------------- |
 | `KNOWLEDGE_DIR`                                              | build               | Local corpus path. CI/Vercel use `CORPUS_REPO_TOKEN` instead.   |
 | `CORPUS_REPO_TOKEN`                                          | build               | Fine-grained read-only PAT for `portfolio-corpus`. Build fails. |
-| `DEEPSEEK_API_KEY` / `DEEPSEEK_BASE_URL`                     | server              | Primary LLM. Failover covers it.                                |
+| `LLM_PRIMARY_API_KEY` / `_BASE_URL` / `_MODEL`               | server              | Primary model. DeepSeek V4 Flash on Alibaba Model Studio (Singapore). |
+| `LLM_FALLBACK_API_KEY` / `_BASE_URL` / `_MODEL`              | server              | Backup model, used automatically when the primary fails. Qwen, same account. |
 | `ANTHROPIC_API_KEY`                                          | server              | Haiku failover. Nothing covers this one.                        |
 | `ELEVENLABS_API_KEY`                                         | server              | Voice token minting. Voice is off; text still works.            |
 | `ELEVENLABS_AGENT_ID`                                        | server              | Which agent to mint against.                                    |

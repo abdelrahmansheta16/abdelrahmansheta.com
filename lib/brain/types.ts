@@ -38,7 +38,7 @@ export interface ProviderRequest {
 
 /** One provider call, streamed. Implementations: DeepSeek direct (primary), Anthropic Haiku (failover). */
 export interface ProviderAdapter {
-  readonly name: "deepseek" | "anthropic";
+  readonly name: "deepseek" | "anthropic" | "qwen";
   readonly model: string;
   stream(req: ProviderRequest): AsyncIterable<ProviderEvent>;
 }

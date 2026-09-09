@@ -102,3 +102,32 @@ moment those areas merge. `docs/MIGRATIONS.lock` lists no migrations yet.
   Confirmed too: `thinking:{type:'disabled'}` is honoured (no `reasoning_content`), DeepSeek returns
   `prompt_cache_hit_tokens` / `prompt_cache_miss_tokens` for the adapter to read, and time-to-first-byte
   from Cairo is ~0.78 s, in line with the latency budget.
+- 2026-09-09 — **Qwen added as the backup, and the primary moved off China.** Probing the supplied key
+  showed it is not DashScope China (that endpoint rejects it) but Alibaba Cloud Model Studio,
+  international — and that the same endpoint serves `deepseek-v4-flash`. So the largest legal exposure,
+  visitor speech reaching the PRC with no data-processing agreement, was fixable with a base-URL change.
+  Measured from Cairo against the real 7,794-token corpus: DeepSeek direct 0.92 s time-to-first-token
+  and 98.6% turn-two cache hit; the same model via Singapore 1.48 s and 98.6%; Qwen3.8-flash 1.39 s and
+  90.6%. Singapore costs about half a second and no cache quality.
+  Three things that would have bitten:
+  * **Reasoning is on by default on Qwen too.** Left on it streams 461 reasoning chunks at 27.6 s to
+    first token, and under a 220-token budget it consumes the whole allowance so the visitor gets an
+    empty answer. It takes the same `thinking:{type:"disabled"}` DeepSeek does, so the existing body
+    injection was reused rather than duplicated (`prepareCompatibleBody`).
+  * **Cache hits were about to become invisible.** Alibaba reports them only as
+    `prompt_tokens_details.cached_tokens` and omits DeepSeek's flat fields, which `extractUsage` did not
+    read — a 98%-cached turn would have been priced as a full miss, silently, and that number drives the
+    $27/$30 spend rules. Fixed, with tests built from the captured payloads.
+  * **`DEEPSEEK_API_KEY` holding an Alibaba key** would have been a lasting footgun, so the two slots are
+    now named by role (`LLM_PRIMARY_*`, `LLM_FALLBACK_*`). Adapter names stay model-specific because they
+    drive cost attribution.
+  The consent line and the privacy processor table said "DeepSeek (Hangzhou, China; data stored in
+  China)" in both languages. That is now untrue, so both say Alibaba Cloud Model Studio (Singapore), and
+  the Anthropic entry was removed since no key is set — a privacy page should list processors that
+  actually process. Anthropic stays wired as an optional third choice.
+  **Verified live, including the failover path, which had never once run:** with the primary key
+  deliberately invalidated, Qwen answered correctly from the corpus, and all six red-line probes held on
+  it in both languages — phone, e-mail and salary returned the scripted refusals and the job-seeking
+  probe answered "I'm not job hunting." Primary restored and re-checked afterwards.
+  Still open: `estimateUsd` carries DeepSeek's list prices for both rows, marked with a TODO. Neither is
+  authoritative for Alibaba; the real per-token rates need reading off their pricing page.

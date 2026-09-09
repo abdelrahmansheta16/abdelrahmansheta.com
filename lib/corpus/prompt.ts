@@ -22,15 +22,15 @@ export const DISCLOSURE = {
 export const CONSENT = {
   en:
     "Talk to the AI version of Abdelrahman. Your voice is streamed to ElevenLabs (US) for speech " +
-    "recognition and voice synthesis; the text of what you say is sent to DeepSeek (Hangzhou, China; " +
-    "data stored in China) to generate replies, with Anthropic (US) as fallback. A pseudonymised text " +
+    "recognition and voice synthesis; the text of what you say is sent to Alibaba Cloud Model Studio " +
+    "(Singapore) to generate replies. A pseudonymised text " +
     "transcript is kept for 30 days so Abdelrahman can improve the answers, then deleted. Audio is not " +
     "stored by us. Sessions are limited to four minutes. Tap Start to agree. Details and how to delete " +
     "your transcript: /privacy.",
   ar:
     "اتكلم مع النسخة الـAI من عبدالرحمن. صوتك بيتبعت لـElevenLabs (أمريكا) عشان يتحول لكلام مكتوب " +
-    "وعشان يترد بصوت مستنسخ؛ ونص كلامك بيتبعت لـDeepSeek (هانغجو، الصين، والبيانات بتتخزن في الصين) " +
-    "عشان يجهّز الرد، وAnthropic (أمريكا) بديل لو حصلت مشكلة. بنحتفظ بنسخة مكتوبة من غير اسمك مدة " +
+    "وعشان يترد بصوت مستنسخ؛ ونص كلامك بيتبعت لـAlibaba Cloud Model Studio (سنغافورة) " +
+    "عشان يجهّز الرد. بنحتفظ بنسخة مكتوبة من غير اسمك مدة " +
     "تلاتين يوم عشان عبدالرحمن يحسّن الإجابات، وبعدين بتتمسح. إحنا مش بنخزن الصوت. الجلسة أقصاها أربع " +
     "دقايق. دوس ابدأ يعني إنت موافق. التفاصيل وطريقة مسح النسخة المكتوبة: /privacy.",
 } as const;

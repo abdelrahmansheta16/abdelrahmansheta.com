@@ -104,8 +104,12 @@ describe("canaryFor", () => {
 describe("CONSENT and DISCLOSURE", () => {
   it("name every processor, the retention window and the session cap in English", () => {
     expect(CONSENT.en).toContain("ElevenLabs");
-    expect(CONSENT.en).toContain("DeepSeek");
-    expect(CONSENT.en).toContain("Anthropic");
+    // The model processor is named by the account the text actually reaches, not by the model family:
+    // the primary is DeepSeek V4 Flash but it is served from Alibaba's Singapore region, and saying
+    // "DeepSeek" would imply a transfer to the PRC that no longer happens.
+    expect(CONSENT.en).toContain("Alibaba Cloud Model Studio");
+    expect(CONSENT.en).toContain("Singapore");
+    expect(CONSENT.en).not.toContain("China");
     expect(CONSENT.en).toContain("30 days");
     expect(CONSENT.en).toContain("four minutes");
     expect(CONSENT.en).toContain("/privacy");
@@ -113,8 +117,9 @@ describe("CONSENT and DISCLOSURE", () => {
 
   it("has an Arabic consent that names the same processors and is written in Masri", () => {
     expect(CONSENT.ar).toContain("ElevenLabs");
-    expect(CONSENT.ar).toContain("DeepSeek");
-    expect(CONSENT.ar).toContain("Anthropic");
+    expect(CONSENT.ar).toContain("Alibaba Cloud Model Studio");
+    expect(CONSENT.ar).toContain("سنغافورة");
+    expect(CONSENT.ar).not.toContain("الصين");
     expect(CONSENT.ar).toContain("/privacy");
     for (const fusha of ["سوف", "لماذا", "الذي", "نحن", "لا يوجد"]) expect(CONSENT.ar).not.toContain(fusha);
   });

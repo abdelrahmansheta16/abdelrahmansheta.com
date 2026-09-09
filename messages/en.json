@@ -29,10 +29,22 @@
     "type": "Type instead",
     "chipsLabel": "Suggested questions",
     "chips": {
-      "cravit": { "label": "What did you build at Cravit?", "prompt": "What did you build at Cravit?" },
-      "cost": { "label": "How did you cut LLM cost 70%?", "prompt": "How did you cut LLM cost 70%?" },
-      "markets": { "label": "Gulf or EU — where can you work?", "prompt": "Gulf or EU — where can you work?" },
-      "cv": { "label": "Show me the CV", "prompt": "Show me the CV" }
+      "cravit": {
+        "label": "What did you build at Cravit?",
+        "prompt": "What did you build at Cravit?"
+      },
+      "cost": {
+        "label": "How did you cut LLM cost 70%?",
+        "prompt": "How did you cut LLM cost 70%?"
+      },
+      "markets": {
+        "label": "Gulf or EU — where can you work?",
+        "prompt": "Gulf or EU — where can you work?"
+      },
+      "cv": {
+        "label": "Show me the CV",
+        "prompt": "Show me the CV"
+      }
     }
   },
   "proof": {
@@ -102,13 +114,36 @@
     "processorPurpose": "Purpose",
     "processorLocation": "Location",
     "processors": {
-      "elevenlabs": { "name": "ElevenLabs", "location": "United States", "purpose": "Voice transport, speech to text and the cloned voice. Audio saving is off." },
-      "deepseek": { "name": "DeepSeek", "location": "Hangzhou, China", "purpose": "The language model that writes the answers. Your message text is sent there." },
-      "anthropic": { "name": "Anthropic", "location": "United States", "purpose": "Failover language model when DeepSeek is unavailable." },
-      "supabase": { "name": "Supabase", "location": "European Union", "purpose": "Database: sessions, pseudonymised transcripts, leads and caps." },
-      "resend": { "name": "Resend", "location": "United States", "purpose": "Sends the messages and summaries you explicitly ask for." },
-      "vercel": { "name": "Vercel", "location": "European Union (fra1)", "purpose": "Hosting and serverless execution." },
-      "cloudflare": { "name": "Cloudflare", "location": "Global", "purpose": "DNS, domain and email routing." }
+      "elevenlabs": {
+        "name": "ElevenLabs",
+        "location": "United States",
+        "purpose": "Voice transport, speech to text and the cloned voice. Audio saving is off."
+      },
+      "llm": {
+        "name": "Alibaba Cloud Model Studio",
+        "location": "Singapore",
+        "purpose": "The language model that writes the answers (DeepSeek V4 Flash, with Qwen as backup). Your message text is sent there."
+      },
+      "supabase": {
+        "name": "Supabase",
+        "location": "European Union",
+        "purpose": "Database: sessions, pseudonymised transcripts, leads and caps."
+      },
+      "resend": {
+        "name": "Resend",
+        "location": "United States",
+        "purpose": "Sends the messages and summaries you explicitly ask for."
+      },
+      "vercel": {
+        "name": "Vercel",
+        "location": "European Union (fra1)",
+        "purpose": "Hosting and serverless execution."
+      },
+      "cloudflare": {
+        "name": "Cloudflare",
+        "location": "Global",
+        "purpose": "DNS, domain and email routing."
+      }
     },
     "retentionTitle": "Retention",
     "retention": {

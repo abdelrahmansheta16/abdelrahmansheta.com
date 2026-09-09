@@ -8,6 +8,7 @@ import { createGuard, type Guard } from "@/lib/brain/guard";
 import {
   createAnthropicProvider,
   createDeepSeekProvider,
+  createQwenProvider,
   withFailover,
 } from "@/lib/llm/provider";
 import type { BrainCorpus } from "@/lib/brain/adapter";
@@ -40,27 +41,43 @@ export function guard(): Guard {
 let providerCache: ProviderAdapter | null = null;
 
 /**
- * DeepSeek primary, Haiku failover. If only one key is configured that provider is used alone; if
- * neither is, the caller gets null and answers 503 rather than pretending.
+ * Primary with an automatic failover behind it. Both slots are configured by ROLE, not by vendor: the
+ * primary and the backup currently run on the same Alibaba account and key, differing only in model,
+ * so naming the variables after a vendor would mislead the next reader.
+ *
+ * The primary is DeepSeek V4 Flash served from Alibaba's international region rather than
+ * api.deepseek.com, which keeps visitor speech out of the PRC. The backup is Qwen. Anthropic stays
+ * wired as an optional third choice and is used only when no backup key is set.
+ *
+ * If only one slot is configured that provider runs alone; if none is, the caller gets null and
+ * answers 503 rather than pretending.
  */
 export function providers(): ProviderAdapter | null {
   if (providerCache !== null) return providerCache;
 
-  const deepseekKey = process.env.DEEPSEEK_API_KEY ?? "";
+  const primaryKey = process.env.LLM_PRIMARY_API_KEY ?? "";
+  const fallbackKey = process.env.LLM_FALLBACK_API_KEY ?? "";
   const anthropicKey = process.env.ANTHROPIC_API_KEY ?? "";
 
   const primary =
-    deepseekKey === ""
+    primaryKey === ""
       ? null
       : createDeepSeekProvider({
-          apiKey: deepseekKey,
-          baseUrl: process.env.DEEPSEEK_BASE_URL,
-          model: process.env.DEEPSEEK_MODEL,
+          apiKey: primaryKey,
+          baseUrl: process.env.LLM_PRIMARY_BASE_URL,
+          model: process.env.LLM_PRIMARY_MODEL,
         });
-  const fallback =
-    anthropicKey === ""
-      ? null
-      : createAnthropicProvider({ apiKey: anthropicKey, model: process.env.ANTHROPIC_MODEL });
+
+  let fallback: ProviderAdapter | null = null;
+  if (fallbackKey !== "") {
+    fallback = createQwenProvider({
+      apiKey: fallbackKey,
+      baseUrl: process.env.LLM_FALLBACK_BASE_URL,
+      model: process.env.LLM_FALLBACK_MODEL,
+    });
+  } else if (anthropicKey !== "") {
+    fallback = createAnthropicProvider({ apiKey: anthropicKey, model: process.env.ANTHROPIC_MODEL });
+  }
 
   if (primary !== null && fallback !== null) providerCache = withFailover(primary, fallback);
   else providerCache = primary ?? fallback;

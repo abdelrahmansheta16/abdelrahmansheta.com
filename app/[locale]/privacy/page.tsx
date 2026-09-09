@@ -5,15 +5,7 @@ import corpus from "@/lib/corpus/corpus.generated";
 import { pageMetadata } from "@/i18n/metadata";
 import SiteHeader from "@/components/layout/SiteHeader";
 
-const PROCESSORS = [
-  "elevenlabs",
-  "deepseek",
-  "anthropic",
-  "supabase",
-  "resend",
-  "vercel",
-  "cloudflare",
-] as const;
+const PROCESSORS = ["elevenlabs", "llm", "supabase", "resend", "vercel", "cloudflare"] as const;
 
 const RETENTION = ["transcripts", "leads", "probe", "audio"] as const;
 

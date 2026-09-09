@@ -137,7 +137,20 @@ suite whose post-guard violation count must be zero, factuality against the corp
 latency and cost. The dialect scorer is calibrated on hand-labelled turns before it gates anything,
 because the public models were trained on travel and news text, not code-switched technical talk.
 
-### 4.9 Cost control
+### 4.9 Model routing and residency
+
+The primary is DeepSeek V4 Flash and the backup is Qwen, both served from Alibaba Cloud Model Studio's
+international region. Running DeepSeek there rather than through its own API keeps visitor speech out
+of the PRC, which was the site's largest legal exposure with EU visitors; measured from Cairo it costs
+about half a second of time-to-first-token and no measurable cache quality (turn-two prefix hits stay
+near 98%). Reasoning is disabled explicitly on every request to both providers — left on it takes Qwen
+from 1.4 s to 27.6 s to first token and, under a 220-token budget, consumes the whole allowance so the
+visitor gets nothing.
+
+The two slots are configured by role rather than by vendor, because they currently share one account
+and key and differ only in model. Adapter names stay model-specific, since they drive cost attribution.
+
+### 4.10 Cost control
 
 Every external call is logged before it is made, so a crash still shows what it cost. A daily job sums
 spend and tightens the cap as it approaches the ceiling, then turns voice off entirely at the limit.

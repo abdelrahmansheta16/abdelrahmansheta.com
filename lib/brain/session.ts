@@ -115,13 +115,21 @@ export async function recordGuardEvent(
  * vendor invoice, and the ledger exists to trip the $27/$30 rules early, not to do accounting.
  */
 export function estimateUsd(
-  provider: "deepseek" | "anthropic",
+  provider: "deepseek" | "anthropic" | "qwen",
   usage: { cacheHitTokens: number; cacheMissTokens: number; completionTokens: number },
 ): number {
-  const rates =
-    provider === "deepseek"
-      ? { hit: 0.014, miss: 0.44, out: 1.32 }
-      : { hit: 0.08, miss: 1.0, out: 5.0 };
+  // USD per million tokens. Drives the $27/$30 spend rules, so it errs high rather than low.
+  //
+  // TODO(pricing): the deepseek row is DeepSeek's own peak list price. Since the primary moved to
+  // Alibaba Model Studio (international) neither row is authoritative any more — read the real
+  // per-token rates off Alibaba's pricing page and replace both. Kept deliberately high in the
+  // meantime: over-estimating spend tightens the cap early, which fails safe.
+  const RATES = {
+    deepseek: { hit: 0.014, miss: 0.44, out: 1.32 },
+    qwen: { hit: 0.014, miss: 0.44, out: 1.32 },
+    anthropic: { hit: 0.08, miss: 1.0, out: 5.0 },
+  } as const;
+  const rates = RATES[provider];
   const usd =
     (usage.cacheHitTokens * rates.hit +
       usage.cacheMissTokens * rates.miss +

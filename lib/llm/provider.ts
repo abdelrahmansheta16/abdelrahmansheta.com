@@ -1,14 +1,16 @@
 /**
- * Provider adapters over the OpenAI-compatible shape. DeepSeek direct is primary; Anthropic Haiku 4.5 is
- * failover. Everything upstream of this file speaks `ProviderRequest` / `ProviderEvent`, so swapping a
- * vendor is a config change (docs/ARCHITECTURE.md 8).
+ * Provider adapters over the OpenAI-compatible shape. Everything upstream speaks `ProviderRequest` /
+ * `ProviderEvent`, so swapping a vendor is a config change (docs/ARCHITECTURE.md 8).
  *
- * Two DeepSeek-specific rules are enforced here and nowhere else:
- *   - `thinking: {type:'disabled'}` on every request (thinking is ON by default and costs 5-15 s TTFT);
- *   - no `user` / `user_id` field, ever — it isolates DeepSeek's KV cache and destroys the prefix hit
- *     rate (invariant 8).
+ * Two rules are enforced here and nowhere else, and they turn out to apply to every OpenAI-compatible
+ * provider this project uses:
+ *   - `thinking: {type:'disabled'}` on every request. Reasoning is ON by default on both DeepSeek and
+ *     Qwen. Measured from Cairo, leaving it on takes Qwen from 1.4 s to 27.6 s to first token, and with
+ *     a 220-token budget the reasoning consumes the whole allowance and the visitor gets nothing back.
+ *   - no `user` / `user_id` field, ever — it isolates the provider's KV cache and destroys the prefix
+ *     hit rate (invariant 8).
  * Neither is expressible through the AI SDK's typed options, so the request body is rewritten in a
- * wrapping `fetch`. `prepareDeepSeekBody` is exported so that rule is unit-testable without a network.
+ * wrapping `fetch`. `prepareCompatibleBody` is exported so the rule is unit-testable without a network.
  */
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createAnthropic } from "@ai-sdk/anthropic";
@@ -24,6 +26,14 @@ import type {
 
 export const DEEPSEEK_DEFAULT_MODEL = "deepseek-v4-flash";
 export const ANTHROPIC_DEFAULT_MODEL = "claude-haiku-4-5";
+export const QWEN_DEFAULT_MODEL = "qwen3.8-flash";
+
+/**
+ * Alibaba Cloud Model Studio, international region. It serves both Qwen and DeepSeek, which is why the
+ * primary can run DeepSeek V4 Flash without visitor text leaving for the PRC. The China endpoint
+ * (dashscope.aliyuncs.com) rejects an international key outright, so the two are not interchangeable.
+ */
+export const ALIBABA_INTL_BASE_URL = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
 export const DEFAULT_FIRST_TOKEN_TIMEOUT_MS = 1500;
 
 type FinishReason = "stop" | "tool_calls" | "length" | "content_filter" | "error";
@@ -55,10 +65,11 @@ const EMPTY_USAGE: Usage = {
 // ---------------------------------------------------------------------------
 
 /**
- * Rewrite an outgoing DeepSeek chat-completions body: force non-thinking mode and drop any identity
- * field the SDK may have added. Pure string in, string out.
+ * Rewrite an outgoing chat-completions body: force non-thinking mode and drop any identity field the
+ * SDK may have added. Pure string in, string out. Verified against both DeepSeek and Qwen, which
+ * accept the same `thinking` parameter.
  */
-export function prepareDeepSeekBody(rawBody: string): string {
+export function prepareCompatibleBody(rawBody: string): string {
   let parsed: unknown;
   try {
     parsed = JSON.parse(rawBody);
@@ -74,10 +85,10 @@ export function prepareDeepSeekBody(rawBody: string): string {
   return JSON.stringify(body);
 }
 
-function deepSeekFetch(base: typeof fetch): typeof fetch {
+function compatibleFetch(base: typeof fetch): typeof fetch {
   return async (input, init) => {
     if (init && typeof init.body === "string") {
-      return base(input, { ...init, body: prepareDeepSeekBody(init.body) });
+      return base(input, { ...init, body: prepareCompatibleBody(init.body) });
     }
     return base(input, init);
   };
@@ -203,8 +214,13 @@ export function extractUsage(sdkUsage: unknown, rawUsage: unknown): Usage {
   const completionTokens =
     readNumber(rawUsage, "completion_tokens") ?? readNumber(sdkUsage, "outputTokens") ?? 0;
 
+  // `prompt_cache_hit_tokens` is DeepSeek-direct only. Alibaba's international endpoint reports the
+  // same thing as `prompt_tokens_details.cached_tokens` and omits the flat field entirely, so without
+  // this branch a 98%-cached turn is recorded as a full miss and priced ~30x too high — silently,
+  // because nothing else about the response looks wrong.
   const cacheHitTokens =
     readNumber(rawUsage, "prompt_cache_hit_tokens") ??
+    readNumber(readObject(rawUsage, "prompt_tokens_details"), "cached_tokens") ??
     readNumber(sdkUsage, "cachedInputTokens") ??
     readNumber(readObject(sdkUsage, "inputTokenDetails"), "cacheReadTokens") ??
     0;
@@ -298,13 +314,43 @@ export function createDeepSeekProvider(opts: {
     name: "deepseek",
     baseURL: opts.baseUrl ?? "https://api.deepseek.com",
     apiKey: opts.apiKey,
-    fetch: deepSeekFetch(opts.fetchImpl ?? fetch),
+    fetch: compatibleFetch(opts.fetchImpl ?? fetch),
     includeUsage: true,
   });
   const model = provider.chatModel(modelId);
 
   return {
     name: "deepseek",
+    model: modelId,
+    stream(req) {
+      return streamAsProviderEvents(model, req, false);
+    },
+  };
+}
+
+/**
+ * Qwen on Alibaba Cloud Model Studio (international). Same wire shape and the same `thinking` override
+ * as DeepSeek, so it reuses `compatibleFetch` rather than duplicating the rule.
+ */
+export function createQwenProvider(opts: {
+  apiKey: string;
+  baseUrl?: string;
+  model?: string;
+  /** Override for tests; defaults to global fetch. */
+  fetchImpl?: typeof fetch;
+}): ProviderAdapter {
+  const modelId = opts.model ?? QWEN_DEFAULT_MODEL;
+  const provider = createOpenAICompatible({
+    name: "qwen",
+    baseURL: opts.baseUrl ?? ALIBABA_INTL_BASE_URL,
+    apiKey: opts.apiKey,
+    fetch: compatibleFetch(opts.fetchImpl ?? fetch),
+    includeUsage: true,
+  });
+  const model = provider.chatModel(modelId);
+
+  return {
+    name: "qwen",
     model: modelId,
     stream(req) {
       return streamAsProviderEvents(model, req, false);

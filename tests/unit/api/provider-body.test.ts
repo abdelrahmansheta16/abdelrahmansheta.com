@@ -1,28 +1,29 @@
-/** The two DeepSeek rules that cost real money if they regress: thinking must be disabled on every
- *  request, and no identity field may ever be sent (it isolates the KV cache — invariant 8). */
+/** The rules that cost real money if they regress: thinking must be disabled on every request, no
+ *  identity field may ever be sent (it isolates the KV cache — invariant 8), and a cache hit must be
+ *  recognised whichever shape the provider reports it in. */
 import { describe, expect, it } from "vitest";
 import {
   extractUsage,
   mapFinishReason,
-  prepareDeepSeekBody,
+  prepareCompatibleBody,
   toModelMessages,
   toToolSet,
 } from "@/lib/llm/provider";
 
-describe("prepareDeepSeekBody", () => {
+describe("prepareCompatibleBody", () => {
   it("injects thinking: disabled", () => {
-    const out = JSON.parse(prepareDeepSeekBody('{"model":"deepseek-v4-flash","messages":[]}')) as Record<string, unknown>;
+    const out = JSON.parse(prepareCompatibleBody('{"model":"deepseek-v4-flash","messages":[]}')) as Record<string, unknown>;
     expect(out.thinking).toEqual({ type: "disabled" });
   });
 
   it("overwrites an enabled thinking block rather than trusting it", () => {
-    const out = JSON.parse(prepareDeepSeekBody('{"thinking":{"type":"enabled"}}')) as Record<string, unknown>;
+    const out = JSON.parse(prepareCompatibleBody('{"thinking":{"type":"enabled"}}')) as Record<string, unknown>;
     expect(out.thinking).toEqual({ type: "disabled" });
   });
 
   it("strips user and user_id", () => {
     const raw = JSON.stringify({ model: "m", user: "visitor-1", user_id: "visitor-1", messages: [] });
-    const text = prepareDeepSeekBody(raw);
+    const text = prepareCompatibleBody(raw);
     expect(text).not.toContain("user_id");
     expect(text).not.toContain("visitor-1");
     const out = JSON.parse(text) as Record<string, unknown>;
@@ -31,14 +32,14 @@ describe("prepareDeepSeekBody", () => {
   });
 
   it("leaves everything else byte-identical", () => {
-    const out = JSON.parse(prepareDeepSeekBody('{"temperature":0.6,"max_tokens":220}')) as Record<string, unknown>;
+    const out = JSON.parse(prepareCompatibleBody('{"temperature":0.6,"max_tokens":220}')) as Record<string, unknown>;
     expect(out.temperature).toBe(0.6);
     expect(out.max_tokens).toBe(220);
   });
 
   it("passes a non-JSON body through untouched", () => {
-    expect(prepareDeepSeekBody("not json")).toBe("not json");
-    expect(prepareDeepSeekBody("[1,2]")).toBe("[1,2]");
+    expect(prepareCompatibleBody("not json")).toBe("not json");
+    expect(prepareCompatibleBody("[1,2]")).toBe("[1,2]");
   });
 });
 
@@ -144,5 +145,55 @@ describe("toToolSet", () => {
     ]);
     expect(Object.keys(set)).toEqual(["a"]);
     expect(set.a).not.toHaveProperty("execute");
+  });
+});
+
+describe("extractUsage — cache hits across providers", () => {
+  // Real payloads captured from each route with the 7,794-token compiled corpus on turn two.
+  it("reads DeepSeek direct, which sends the flat prompt_cache_hit_tokens fields", () => {
+    const u = extractUsage(undefined, {
+      prompt_tokens: 7792,
+      completion_tokens: 40,
+      prompt_cache_hit_tokens: 7680,
+      prompt_cache_miss_tokens: 112,
+      prompt_tokens_details: { cached_tokens: 7680 },
+    });
+    expect(u.cacheHitTokens).toBe(7680);
+    expect(u.cacheMissTokens).toBe(112);
+  });
+
+  /**
+   * Alibaba's international endpoint omits the flat fields entirely and reports the hit only inside
+   * prompt_tokens_details. Before this branch existed a 98%-cached turn was recorded as a full miss
+   * and priced roughly thirty times too high — silently, because nothing else looked wrong.
+   */
+  it("reads Alibaba/Singapore, which reports the hit only in prompt_tokens_details", () => {
+    const u = extractUsage(undefined, {
+      prompt_tokens: 7792,
+      completion_tokens: 40,
+      prompt_tokens_details: { cached_tokens: 7680 },
+    });
+    expect(u.cacheHitTokens).toBe(7680);
+    expect(u.cacheMissTokens).toBe(112);
+  });
+
+  it("reads Qwen, which adds text_tokens alongside cached_tokens", () => {
+    const u = extractUsage(undefined, {
+      prompt_tokens: 7910,
+      completion_tokens: 40,
+      prompt_tokens_details: { cached_tokens: 7168, text_tokens: 7910 },
+    });
+    expect(u.cacheHitTokens).toBe(7168);
+    expect(u.cacheHitTokens / u.promptTokens).toBeGreaterThan(0.85);
+  });
+
+  it("still reports a genuine miss as a miss", () => {
+    const u = extractUsage(undefined, {
+      prompt_tokens: 7794,
+      completion_tokens: 40,
+      prompt_tokens_details: { cached_tokens: 0 },
+    });
+    expect(u.cacheHitTokens).toBe(0);
+    expect(u.cacheMissTokens).toBe(7794);
   });
 });

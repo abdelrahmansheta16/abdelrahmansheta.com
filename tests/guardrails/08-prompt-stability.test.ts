@@ -48,7 +48,8 @@ describe.skipIf(!EXAMPLE_CORPUS_READY)(
 
     it("names no environment variable that the server reads", () => {
       const secrets = [
-        "DEEPSEEK_API_KEY",
+        "LLM_PRIMARY_API_KEY",
+        "LLM_FALLBACK_API_KEY",
         "ANTHROPIC_API_KEY",
         "ELEVENLABS_API_KEY",
         "SUPABASE_SERVICE_ROLE_KEY",

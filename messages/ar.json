@@ -29,10 +29,22 @@
     "type": "اكتب بدل الكلام",
     "chipsLabel": "أسئلة جاهزة",
     "chips": {
-      "cravit": { "label": "عملت إيه في Cravit؟", "prompt": "عملت إيه في Cravit؟" },
-      "cost": { "label": "قللت تكلفة الـ LLM بنسبة 70% إزاي؟", "prompt": "قللت تكلفة الـ LLM بنسبة 70% إزاي؟" },
-      "markets": { "label": "الخليج ولا أوروبا — تقدر تشتغل فين؟", "prompt": "الخليج ولا أوروبا — تقدر تشتغل فين؟" },
-      "cv": { "label": "وريني الـ CV", "prompt": "وريني الـ CV" }
+      "cravit": {
+        "label": "عملت إيه في Cravit؟",
+        "prompt": "عملت إيه في Cravit؟"
+      },
+      "cost": {
+        "label": "قللت تكلفة الـ LLM بنسبة 70% إزاي؟",
+        "prompt": "قللت تكلفة الـ LLM بنسبة 70% إزاي؟"
+      },
+      "markets": {
+        "label": "الخليج ولا أوروبا — تقدر تشتغل فين؟",
+        "prompt": "الخليج ولا أوروبا — تقدر تشتغل فين؟"
+      },
+      "cv": {
+        "label": "وريني الـ CV",
+        "prompt": "وريني الـ CV"
+      }
     }
   },
   "proof": {
@@ -102,13 +114,36 @@
     "processorPurpose": "بتعمل إيه",
     "processorLocation": "فين",
     "processors": {
-      "elevenlabs": { "name": "ElevenLabs", "location": "أمريكا", "purpose": "نقل الصوت، وتحويل الكلام لنص، والصوت المستنسخ. حفظ الصوت مقفول." },
-      "deepseek": { "name": "DeepSeek", "location": "هانغتشو، الصين", "purpose": "الموديل اللي بيكتب الإجابات. نص كلامك بيتبعت هناك." },
-      "anthropic": { "name": "Anthropic", "location": "أمريكا", "purpose": "موديل احتياطي لما DeepSeek يقع." },
-      "supabase": { "name": "Supabase", "location": "الاتحاد الأوروبي", "purpose": "قاعدة البيانات: الجلسات، النصوص المموّهة، الليدز واللِميتس." },
-      "resend": { "name": "Resend", "location": "أمريكا", "purpose": "بتبعت الرسايل والملخصات اللي إنت بنفسك تطلبها." },
-      "vercel": { "name": "Vercel", "location": "الاتحاد الأوروبي (fra1)", "purpose": "الاستضافة والتشغيل." },
-      "cloudflare": { "name": "Cloudflare", "location": "عالمي", "purpose": "الدومين والـ DNS وتوجيه الإيميل." }
+      "elevenlabs": {
+        "name": "ElevenLabs",
+        "location": "أمريكا",
+        "purpose": "نقل الصوت، وتحويل الكلام لنص، والصوت المستنسخ. حفظ الصوت مقفول."
+      },
+      "llm": {
+        "name": "Alibaba Cloud Model Studio",
+        "location": "سنغافورة",
+        "purpose": "الموديل اللي بيكتب الإجابات (DeepSeek V4 Flash، وQwen بديل). نص رسالتك بيتبعت هناك."
+      },
+      "supabase": {
+        "name": "Supabase",
+        "location": "الاتحاد الأوروبي",
+        "purpose": "قاعدة البيانات: الجلسات، النصوص المموّهة، الليدز واللِميتس."
+      },
+      "resend": {
+        "name": "Resend",
+        "location": "أمريكا",
+        "purpose": "بتبعت الرسايل والملخصات اللي إنت بنفسك تطلبها."
+      },
+      "vercel": {
+        "name": "Vercel",
+        "location": "الاتحاد الأوروبي (fra1)",
+        "purpose": "الاستضافة والتشغيل."
+      },
+      "cloudflare": {
+        "name": "Cloudflare",
+        "location": "عالمي",
+        "purpose": "الدومين والـ DNS وتوجيه الإيميل."
+      }
     },
     "retentionTitle": "مدة الاحتفاظ",
     "retention": {
