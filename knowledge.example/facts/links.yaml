@@ -1,0 +1,7 @@
+site: "https://nour-example.dev"
+linkedin: "https://www.linkedin.com/in/nour-example"
+github: "https://github.com/nour-example"
+contact_email: "hello@nour-example.dev"      # the only address the twin may say
+legal_email: "legal@nour-example.dev"
+cal_link: "https://cal.com/nour-example/intro"
+cv_public_path: "/cv"

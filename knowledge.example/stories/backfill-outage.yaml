@@ -1,0 +1,13 @@
+id: story-backfill-outage
+title: "The backfill that took the queue down"
+competencies: ["incident response", "data migration", "communication"]
+situation: "A nightly backfill at Fanous wrote into the same Postgres tables the ordering service read from."
+stakes: "About twenty minutes of order timeouts at the busiest hour of the week."
+action: "I paused the backfill, moved it behind a read replica, and rewrote it to chunk by primary key with a budget on rows per second."
+tradeoff: "The backfill went from one night to four nights, and I took that over a second outage."
+result: "No repeat incident, and the chunked runner became the default for every migration after it."
+lesson: "A migration that cannot be paused is not a migration, it is a bet."
+privacy_notes: "All numbers in this example story are invented."
+followup_risk: high
+spoken_en: "We took the ordering queue down with a backfill once. I paused it, moved it behind a replica, and made it chunk by key with a rate budget."
+spoken_ar: "مرة عملنا backfill نزّل الـ queue بتاعة الأوردرات. وقفته، ونقلته على replica، وخلّيته يشتغل على دفعات بحد أقصى في الثانية."

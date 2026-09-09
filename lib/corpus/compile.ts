@@ -1,5 +1,11 @@
 /** Corpus compiler API. Area B. scripts/compile-corpus.ts is a thin CLI over this. */
+import { createHash } from "node:crypto";
+import { getEncoding } from "js-tiktoken";
 import type { CompiledCorpus } from "./schema";
+import { loadCorpus } from "./load";
+import type { CorpusSources } from "./load";
+import { collectStrings, findAllowlistViolations, findDenylistHits, findDigitHits } from "./lint";
+import { CONSENT, DISCLOSURE, renderSystemPrompt } from "./prompt";
 
 export interface CompileOptions {
   dir: string;                       // path to a corpus directory (private repo checkout or knowledge.example)
@@ -11,11 +17,185 @@ export interface CompileResult {
   warnings: string[];
 }
 
-export async function compileCorpus(_opts: CompileOptions): Promise<CompileResult> {
-  throw new Error("compileCorpus: implemented in area B");
+/** Above this the build fails: the prompt would eat the context window and the cache discount. */
+export const TOKEN_LIMIT = 45_000;
+/** Above this the build warns. */
+export const TOKEN_WARN = 35_000;
+
+interface NamedText {
+  label: string;
+  text: string;
+}
+
+/** Fields that are read out loud, where digits must be spelled as words. */
+export function voiceFacingTexts(sources: CorpusSources): NamedText[] {
+  const out: NamedText[] = [];
+  sources.fewshotEn.forEach((pair, i) => out.push({ label: `persona/fewshot_en.yaml[${i}].a`, text: pair.a }));
+  sources.fewshotMasri.forEach((pair, i) => out.push({ label: `persona/fewshot_masri.yaml[${i}].a`, text: pair.a }));
+  for (const project of sources.projects) {
+    if (project.spoken_en) out.push({ label: `${project.file}:spoken_en`, text: project.spoken_en });
+    if (project.spoken_ar) out.push({ label: `${project.file}:spoken_ar`, text: project.spoken_ar });
+  }
+  for (const story of sources.stories) {
+    if (story.spoken_en) out.push({ label: `${story.file}:spoken_en`, text: story.spoken_en });
+    if (story.spoken_ar) out.push({ label: `${story.file}:spoken_ar`, text: story.spoken_ar });
+  }
+  for (const opinion of sources.opinions) {
+    if (opinion.spoken_ar) out.push({ label: `${opinion.file}:spoken_ar`, text: opinion.spoken_ar });
+  }
+  return out;
+}
+
+/** Everything the optional guard lint runs over, besides the final prompt. */
+function guardLintTargets(sources: CorpusSources): NamedText[] {
+  const out = voiceFacingTexts(sources);
+  sources.faq.forEach((entry, i) => {
+    if (entry.a_en) out.push({ label: `faq/recruiter.yaml[${i}].a_en`, text: entry.a_en });
+    if (entry.a_ar) out.push({ label: `faq/recruiter.yaml[${i}].a_ar`, text: entry.a_ar });
+  });
+  for (const redline of sources.redlines) {
+    out.push({ label: `policy/redlines.yaml:${redline.id}.refusal_en`, text: redline.refusal_en });
+    out.push({ label: `policy/redlines.yaml:${redline.id}.refusal_ar`, text: redline.refusal_ar });
+  }
+  out.push({ label: "policy/topics.yaml:deflect_en", text: sources.topics.deflect_en });
+  out.push({ label: "policy/topics.yaml:deflect_ar", text: sources.topics.deflect_ar });
+  return out;
+}
+
+/** Text that the proper-noun allowlist governs: stories and opinions. */
+function allowlistTargets(sources: CorpusSources): NamedText[] {
+  const out: NamedText[] = [];
+  for (const story of sources.stories) {
+    const fields = [
+      story.title,
+      story.situation,
+      story.stakes,
+      story.action,
+      story.tradeoff,
+      story.result,
+      story.lesson,
+      story.privacy_notes,
+      story.spoken_en ?? "",
+    ];
+    out.push({ label: story.file, text: fields.filter((f) => f.length > 0).join("\n") });
+  }
+  for (const opinion of sources.opinions) {
+    const fields = [opinion.claim ?? "", opinion.why ?? "", opinion.nuance ?? "", opinion.body];
+    out.push({ label: opinion.file, text: fields.filter((f) => f.length > 0).join("\n") });
+  }
+  return out;
+}
+
+/** Every lint that can fail the build, as readable `path: problem` lines. */
+export function lintCorpus(
+  sources: CorpusSources,
+  systemPrompt: string,
+  guardLint?: (text: string) => string[],
+): string[] {
+  const failures: string[] = [];
+
+  const everyField = [
+    ...collectStrings(sources.profile),
+    ...collectStrings(sources.proofPoints),
+    ...collectStrings(sources.logistics),
+    ...collectStrings(sources.links),
+    ...collectStrings(sources.redlines),
+    ...collectStrings(sources.topics),
+    ...collectStrings(sources.faq),
+    ...collectStrings(sources.fewshotEn),
+    ...collectStrings(sources.fewshotMasri),
+    ...collectStrings(sources.pronunciation),
+    ...collectStrings(sources.projects),
+    ...collectStrings(sources.stories),
+    ...collectStrings(sources.opinions),
+    sources.voiceGuide,
+  ];
+  for (const text of everyField) {
+    for (const hit of findDenylistHits(text, sources.denylist)) {
+      failures.push(`denylist: "${hit}" appears in a corpus field`);
+    }
+  }
+  for (const hit of findDenylistHits(systemPrompt, sources.denylist)) {
+    failures.push(`denylist: "${hit}" appears in the compiled system prompt`);
+  }
+
+  for (const { label, text } of voiceFacingTexts(sources)) {
+    for (const digits of findDigitHits(text)) {
+      failures.push(`${label}: voice-facing text contains the digits "${digits}"; spell numbers as words`);
+    }
+  }
+
+  for (const { label, text } of allowlistTargets(sources)) {
+    for (const token of findAllowlistViolations(text, sources.allowlist)) {
+      failures.push(`${label}: "${token}" is not in policy/allowlist.txt`);
+    }
+  }
+
+  if (guardLint) {
+    for (const { label, text } of guardLintTargets(sources)) {
+      for (const rule of guardLint(text)) failures.push(`${label}: guard rule "${rule}" fired`);
+    }
+    for (const rule of guardLint(systemPrompt)) {
+      failures.push(`system prompt: guard rule "${rule}" fired`);
+    }
+  }
+
+  return [...new Set(failures)];
+}
+
+/** o200k_base token count; the same tokeniser family the providers bill on. */
+export function estimateTokens(text: string): number {
+  return getEncoding("o200k_base").encode(text).length;
+}
+
+export async function compileCorpus(opts: CompileOptions): Promise<CompileResult> {
+  const { sources, warnings } = await loadCorpus(opts.dir);
+  const systemPrompt = renderSystemPrompt(sources);
+
+  const failures = lintCorpus(sources, systemPrompt, opts.lint);
+  if (failures.length > 0) {
+    throw new Error(`corpus lint failed (${failures.length}):\n- ${failures.join("\n- ")}`);
+  }
+
+  const tokenEstimate = estimateTokens(systemPrompt);
+  if (tokenEstimate > TOKEN_LIMIT) {
+    throw new Error(`system prompt is ${tokenEstimate} tokens, over the ${TOKEN_LIMIT} token limit`);
+  }
+  if (tokenEstimate > TOKEN_WARN) {
+    warnings.push(`system prompt is ${tokenEstimate} tokens, over the ${TOKEN_WARN} warning threshold`);
+  }
+
+  const corpus: CompiledCorpus = {
+    version: createHash("sha256").update(systemPrompt, "utf8").digest("hex").slice(0, 12),
+    builtAt: new Date().toISOString(),
+    tokenEstimate,
+    systemPrompt,
+    profile: sources.profile,
+    proofPoints: sources.proofPoints,
+    logistics: sources.logistics,
+    links: sources.links,
+    redlines: sources.redlines,
+    topics: sources.topics,
+    pronunciation: sources.pronunciation,
+    projects: sources.projects.map(({ file: _file, ...project }) => project),
+    consent: { en: CONSENT.en, ar: CONSENT.ar },
+    disclosure: { en: DISCLOSURE.en, ar: DISCLOSURE.ar },
+  };
+
+  return { corpus, warnings };
 }
 
 /** Serialise to lib/corpus/corpus.generated.ts (gitignored). */
-export function renderGeneratedModule(_corpus: CompiledCorpus): string {
-  throw new Error("renderGeneratedModule: implemented in area B");
+export function renderGeneratedModule(corpus: CompiledCorpus): string {
+  return [
+    "// GENERATED by scripts/compile-corpus.ts. Do not edit and do not commit; this file is gitignored.",
+    'import type { CompiledCorpus } from "./schema";',
+    "",
+    `const corpus: CompiledCorpus = ${JSON.stringify(corpus, null, 2)};`,
+    "",
+    "export default corpus;",
+    `export const CORPUS_VERSION = ${JSON.stringify(corpus.version)};`,
+    "export const SYSTEM_PROMPT = corpus.systemPrompt;",
+    "",
+  ].join("\n");
 }
