@@ -36,7 +36,7 @@ export const TOOLS = {
   open_leave_message: tool("Open the leave-a-message form; the visitor types and submits it themselves.", z.object({})),
   open_email_summary: tool("Offer to e-mail the visitor a summary; the visitor enters their address and consents themselves. Once per session.", z.object({})),
   offer_lead_capture: tool("Offer, once per session and only after the visitor expresses hiring intent, a small card to leave name, company and e-mail. Never pressure.", z.object({ reason: z.string().max(120) }), true),
-  show_contact: tool("Show the contact card: hello@abdelrahmansheta.com, LinkedIn, the message form and the booking link.", z.object({})),
+  show_contact: tool("Show the contact card: the public contact address, LinkedIn, the message form and the booking link. The addresses themselves come from the corpus, never from this description.", z.object({})),
 } as const;
 
 export type ToolName = keyof typeof TOOLS;

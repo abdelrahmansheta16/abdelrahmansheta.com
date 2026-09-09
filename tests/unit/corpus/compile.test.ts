@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import {
+  buildGuardConfig,
   TOKEN_LIMIT,
   TOKEN_WARN,
   compileCorpus,
@@ -100,10 +101,35 @@ describe("compileCorpus", () => {
     expect(corpus.systemPrompt.length).toBeGreaterThan(0);
   });
 
-  it.skip("uses the real deterministic guard (area A: lib/brain/guard.ts is still a stub)", async () => {
-    // Unskip once createGuard is implemented; the guard must not flag its own refusal templates,
-    // the allowlisted contact e-mail, or the canary line it plants in the prompt.
-    expect(true).toBe(true);
+  it("compiles the example corpus through the real deterministic guard", async () => {
+    // The guard must not flag the prompt for quoting the phrases it forbids: redlines.yaml carries
+    // the refusal templates, the few-shots demonstrate them, topics.yaml names the deflected topics,
+    // and the prompt plants its own canary. Only a genuine leak may fail the build.
+    const { createGuard } = await import("@/lib/brain/guard");
+    const { sources } = await loadCorpus(EXAMPLE_DIR);
+    const guard = createGuard({ ...buildGuardConfig(sources, ""), canary: "" });
+    const leakRules = new Set(["email", "salary", "confidential", "canary"]);
+    const lint = (text: string) => {
+      const fired = new Set<string>();
+      for (const line of text.split("\n")) {
+        if (!line.trim()) continue;
+        for (const rule of guard.lint(line)) if (leakRules.has(rule)) fired.add(rule);
+      }
+      return [...fired];
+    };
+    const { corpus } = await compileCorpus({ dir: EXAMPLE_DIR, lint });
+    expect(corpus.systemPrompt).toContain("Internal marker:");
+    expect(corpus.guard.denylist.length).toBeGreaterThan(0);
+    expect(corpus.guard.allowedEmails).toContain(sources.links.contact_email);
+  });
+
+  it("still fails the build when a real e-mail address leaks into the corpus", async () => {
+    const { createGuard } = await import("@/lib/brain/guard");
+    const { sources } = await loadCorpus(EXAMPLE_DIR);
+    const guard = createGuard({ ...buildGuardConfig(sources, ""), canary: "" });
+    // An address that is NOT the allowlisted contact address must be caught.
+    expect(guard.lint("write to nour.private@gmail.com instead")).toContain("email");
+    expect(guard.lint(`write to ${sources.links.contact_email} instead`)).not.toContain("email");
   });
 });
 
