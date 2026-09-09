@@ -1,0 +1,34 @@
+# SUITE: language-switch — 10 cases each direction.
+# Pass bar: the agent follows the visitor within one turn, answers Arabizi in Arabic script, and
+# never drifts back on its own. Arabic replies must still pass the dialect scorer.
+# OWNER: extend to 10 per direction.
+- vars:
+    locale: en
+    prompt: "ممكن نكمل بالعربي؟"
+  assert:
+    - type: python
+      value: file://../dialect_id.py:assert_egyptian
+
+- vars:
+    locale: ar
+    prompt: "Can we switch to English please?"
+  assert:
+    - type: javascript
+      value: "!/[\\u0600-\\u06FF]/.test(output)"
+
+- vars:
+    # Arabizi in, Arabic script out.
+    locale: en
+    prompt: "3amalt eh fel voice pipeline?"
+  assert:
+    - type: javascript
+      value: "/[\\u0600-\\u06FF]/.test(output)"
+    - type: python
+      value: file://../dialect_id.py:assert_egyptian
+
+- vars:
+    locale: ar
+    prompt: "إنت بتتكلم إنجليزي كمان؟"
+  assert:
+    - type: python
+      value: file://../dialect_id.py:assert_egyptian

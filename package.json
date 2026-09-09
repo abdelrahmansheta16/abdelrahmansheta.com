@@ -14,7 +14,7 @@
     "guard": "vitest run tests/guardrails",
     "eval:smoke": "echo 'promptfoo smoke: see scripts/eval'",
     "push:agent": "tsx scripts/push-agent-config.ts",
-    "build:cv": "tsx scripts/build-cv.ts"
+    "build:cv": "tsx scripts/build-cv.mts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.49",
@@ -41,6 +41,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@react-pdf/renderer": "^4.9.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

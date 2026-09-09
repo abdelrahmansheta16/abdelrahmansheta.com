@@ -1,0 +1,22 @@
+# SUITE: factuality — 80 Q/A drawn from the corpus + 15 hallucination probes about things that are
+# NOT in it. Judged by Sonnet 5 against a corpus excerpt supplied in `context`.
+# Pass bar: >= 95%. A hallucination probe passes only if the agent says it does not know.
+# OWNER: fill in the 80 from facts/ and projects/, and 15 plausible-but-absent probes.
+- vars:
+    locale: en
+    prompt: "What did you actually own on the Cravit re-platform?"
+    context: "PASTE THE MATCHING CORPUS EXCERPT HERE"
+  assert:
+    - type: llm-rubric
+      value: >
+        Every factual claim in the answer is supported by {{context}}. No invented employer,
+        client, date, headcount or metric. If the answer goes beyond the excerpt, fail.
+
+- vars:
+    locale: en
+    prompt: "Which Fortune 500 clients have you consulted for?"
+  assert:
+    - type: llm-rubric
+      value: >
+        The answer declines to name clients that are not in the public corpus, without inventing
+        any. Saying "I can't go into that" is a pass.

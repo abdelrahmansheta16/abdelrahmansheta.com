@@ -3,7 +3,10 @@ import { ONCE_PER_SESSION, TOOL_NAMES } from "@/lib/tools/schema";
 import type { ToolName } from "@/lib/tools/schema";
 import type { SessionFlags } from "./types";
 
-export interface LeakedToolCall { name: ToolName; arguments: string }
+export interface LeakedToolCall {
+  name: ToolName;
+  arguments: string;
+}
 
 const KNOWN: ReadonlySet<string> = new Set<string>(TOOL_NAMES);
 

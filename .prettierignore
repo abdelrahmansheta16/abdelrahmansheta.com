@@ -1,0 +1,20 @@
+# Build output and generated artefacts — never formatted, never linted.
+.next/
+out/
+build/
+coverage/
+node_modules/
+pnpm-lock.yaml
+next-env.d.ts
+*.tsbuildinfo
+public/
+lib/corpus/corpus.generated.ts
+generated/
+scripts/eval/.cache/
+docs/MIGRATIONS.lock
+
+# Reference documents whose hand-made table alignment and line breaks are load-bearing for the
+# humans and agents that read them. Reformatting these adds review noise and merge conflicts.
+CLAUDE.md
+docs/PLAN.md
+docs/PROGRESS.md
