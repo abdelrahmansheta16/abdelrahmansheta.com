@@ -1,0 +1,21 @@
+# Proper nouns that may appear in stories and opinions. Anything capitalised and not here fails the build.
+Nour
+Example
+Example University
+Example Academy
+Example Conference
+Example Cloud Practitioner
+Fanous
+Sandbox Foods
+Cairo
+Egypt
+Arabic
+English
+Masri
+Python
+FastAPI
+Postgres
+Redis
+Kafka
+Airflow
+WebSockets

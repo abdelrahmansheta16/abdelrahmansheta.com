@@ -1,0 +1,33 @@
+[
+  {
+    "id": "pp-01-backfill",
+    "lanes": [
+      "A"
+    ],
+    "claim": "I ended a repeating outage by rewriting the nightly backfill to run behind a replica in budgeted chunks.",
+    "metric": "3 incidents a year to 0",
+    "domain_tags": [
+      "postgres",
+      "migrations"
+    ],
+    "seniority_signal": "senior",
+    "evidence_role": "Fanous — Senior Backend Engineer",
+    "verified": true
+  },
+  {
+    "id": "pp-02-latency",
+    "lanes": [
+      "A",
+      "D"
+    ],
+    "claim": "I cut median write latency by batching inserts on the hot table and moving the audit trail off the request path.",
+    "metric": "40% lower median write latency",
+    "domain_tags": [
+      "performance"
+    ],
+    "seniority_signal": "senior",
+    "evidence_role": "Fanous — Senior Backend Engineer",
+    "verified": true,
+    "note": "Invented sample metric."
+  }
+]

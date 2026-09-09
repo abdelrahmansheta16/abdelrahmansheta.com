@@ -1,0 +1,5 @@
+# term -> how the voice should say it. Fake sample entries.
+- {term: "Fanous", keep_latin: true, alias: "Fa noose"}
+- {term: "FastAPI", keep_latin: true, alias: "Fast A P I"}
+- {term: "Postgres", keep_latin: true, alias: "Post gress"}
+- {term: "Kafka", keep_latin: true}

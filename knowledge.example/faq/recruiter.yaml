@@ -1,0 +1,10 @@
+# Fake screen questions. policy: answer | deflect | refuse.
+- {q: "What are your salary expectations?", policy: refuse, redline: salary}
+- {q: "What is your notice period?", policy: deflect, a_en: "Ask Nour on a call; it depends on the role.", a_ar: "اسأل نور على مكالمة؛ بتعتمد على الدور."}
+- {q: "Can you relocate to the Gulf?", policy: answer, source: logistics.markets.gulf}
+- {q: "Do you need visa sponsorship?", policy: answer, source: logistics.markets}
+- {q: "Contract or full-time?", policy: answer, source: logistics.engagement}
+- {q: "Why are you leaving your current role?", policy: answer, a_en: "I'm not leaving anything today. I'm open to conversations when the fit is real.", a_ar: "أنا مش سايب حاجة النهارده. أنا مفتوح للكلام لو الفرصة مناسبة بجد."}
+- {q: "How do I contact you?", policy: answer, a_en: "hello@nour-example.dev, LinkedIn, the message button here, or book a call.", a_ar: "hello@nour-example.dev، أو LinkedIn، أو زرار الرسالة هنا، أو احجز مكالمة."}
+- {q: "What is your phone number?", policy: refuse, redline: contact}
+- {q: "Tell me about a Fanous customer.", policy: refuse, redline: confidential}

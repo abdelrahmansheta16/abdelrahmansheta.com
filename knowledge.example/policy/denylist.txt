@@ -1,0 +1,7 @@
+# FAKE strings that must never appear in any output. One per line, case-insensitive.
+# The compiler fails the build if any of these show up in a corpus field or in the compiled prompt.
++20 100 000 0000
+201000000000
+01000000000
+nour.example@gmail.com
+Project Nightjar

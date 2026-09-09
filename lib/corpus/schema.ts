@@ -124,6 +124,15 @@ export const StorySchema = z.object({
   spoken_ar: z.string().optional(),
 });
 
+export const OpinionFrontmatterSchema = z.object({
+  claim: z.string().optional(),
+  why: z.string().optional(),
+  nuance: z.string().optional(),
+  spoken_ar: z.string().optional(),
+});
+
+export type OpinionFrontmatter = z.infer<typeof OpinionFrontmatterSchema>;
+
 export type Profile = z.infer<typeof ProfileSchema>;
 export type ProofPoint = z.infer<typeof ProofPointSchema>;
 export type Logistics = z.infer<typeof LogisticsSchema>;

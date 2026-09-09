@@ -1,0 +1,17 @@
+# Invented logistics for the example person. There is no salary key here, by construction.
+status_phrase_en: "open to conversations"
+status_phrase_ar: "مفتوح للكلام"
+based_in: "Cairo, Egypt"
+timezone: "Africa/Cairo"
+markets:
+  gulf: {answer: "yes", note_en: "Relocation to the Gulf is on the table.", note_ar: "الانتقال للخليج وارد."}
+  us_remote: {answer: "yes", note_en: "Remote from Cairo, usually as a contractor.", note_ar: "ريموت من القاهرة، غالبًا contractor."}
+  eu_uk: {answer: "no sponsorship", note_en: "Remote works; roles that need sponsorship are a harder fit.", note_ar: "الريموت ينفع؛ الأدوار اللي محتاجة sponsorship أصعب."}
+overlap:
+  eu: "full working day"
+  gulf: "full working day"
+  us_east: "morning overlap"
+engagement: {employment: true, contract: true}
+notice_period: "ask Nour"
+interview_preferences_en: "Happy with take-homes that look like real work and with system-design conversations."
+interview_preferences_ar: "بحب الـ take-home اللي شبه الشغل الحقيقي، وكلام في الـ system design."

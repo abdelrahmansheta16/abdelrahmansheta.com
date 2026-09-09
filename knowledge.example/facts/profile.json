@@ -1,0 +1,88 @@
+{
+  "name": "Nour Example",
+  "headline": "Senior Backend Engineer — Fake Data Platforms",
+  "subheadline": "Python · Postgres · Streaming · Voice",
+  "location": "Cairo, Egypt",
+  "languages": [
+    "Arabic — native",
+    "English — professional working proficiency"
+  ],
+  "summary": "Backend engineer for invented companies. Builds ingestion pipelines, keeps them boring, and writes the runbook before the incident. Everything in this file is fictional sample data for the public example corpus.",
+  "education": [
+    {
+      "degree": "Bachelor of Computer Engineering",
+      "institution": "Example University",
+      "start": "2015",
+      "end": "2019"
+    }
+  ],
+  "certificates": [
+    "Example Cloud Practitioner — Example Academy (2021)"
+  ],
+  "notable": [
+    "Talk on chunked backfills at the Example Conference"
+  ],
+  "skills": {
+    "backend": [
+      "Python",
+      "FastAPI",
+      "Postgres",
+      "Redis"
+    ],
+    "data": [
+      "Kafka",
+      "dbt",
+      "Airflow"
+    ],
+    "voice": [
+      "WebSockets",
+      "streaming speech recognition"
+    ]
+  },
+  "roles": [
+    {
+      "company": "Fanous",
+      "company_url": "https://fanous.example.com",
+      "title": "Senior Backend Engineer",
+      "location": "Cairo, Egypt",
+      "start": "2022-01",
+      "end": null,
+      "stack": [
+        "Python",
+        "FastAPI",
+        "Postgres",
+        "Redis",
+        "Kafka"
+      ],
+      "domain": [
+        "fake data platforms",
+        "streaming"
+      ],
+      "achievements": [
+        "Rebuilt the ingestion path so a nightly backfill runs behind a read replica in chunks with a rows-per-second budget, ending a class of incident that had happened 3 times in a year.",
+        "Cut median write latency 40% by batching the hot table's inserts and moving the audit trail off the request path."
+      ]
+    },
+    {
+      "company": "Sandbox Foods",
+      "title": "Backend Engineer",
+      "location": "Remote",
+      "start": "2019-08",
+      "end": "2021-12",
+      "stack": [
+        "Python",
+        "Postgres"
+      ],
+      "domain": [
+        "ordering"
+      ],
+      "achievements": [
+        "Owned the ordering API through a migration from a single database to a primary and 2 replicas with no downtime window."
+      ]
+    }
+  ],
+  "scope_notes": {
+    "scale_claims": "Every number in this example corpus is invented and belongs to nobody.",
+    "english": "Sample text only."
+  }
+}
