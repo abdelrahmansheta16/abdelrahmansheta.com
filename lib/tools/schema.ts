@@ -15,6 +15,7 @@ export const PROJECT_SLUGS = [
   "rafeeq",
   "puffer-audit",
   "style-protocol",
+  "ozzie",
 ] as const;
 export const LOCALES = ["en", "ar"] as const;
 export type Locale = (typeof LOCALES)[number];

@@ -68,3 +68,33 @@ describe("forbidden patterns — employer-confidential shapes", () => {
     expect(findForbiddenPatternHits("anything at all", [])).toEqual([]);
   });
 });
+
+describe("the example corpus must never reach production", () => {
+  it("refuses the fallback in a production build", async () => {
+    const { assertExampleCorpusAllowed } = await import("@/scripts/compile-corpus");
+    expect(() => { assertExampleCorpusAllowed({ VERCEL_ENV: "production" }); }).toThrow(
+      /no corpus available for a production build/,
+    );
+    expect(() => { assertExampleCorpusAllowed({ NODE_ENV: "production" }); }).toThrow();
+  });
+
+  it("allows it for local work and preview deploys", async () => {
+    const { assertExampleCorpusAllowed } = await import("@/scripts/compile-corpus");
+    expect(() => { assertExampleCorpusAllowed({ VERCEL_ENV: "preview" }); }).not.toThrow();
+    expect(() => { assertExampleCorpusAllowed({}); }).not.toThrow();
+  });
+
+  it("allows a fork to demo the example deliberately", async () => {
+    const { assertExampleCorpusAllowed } = await import("@/scripts/compile-corpus");
+    expect(() => {
+      assertExampleCorpusAllowed({ VERCEL_ENV: "production", ALLOW_EXAMPLE_CORPUS: "1" });
+    }).not.toThrow();
+  });
+
+  it("an explicit KNOWLEDGE_DIR always wins, production or not", async () => {
+    const { resolveCorpusDir } = await import("@/scripts/compile-corpus");
+    await expect(
+      resolveCorpusDir({ VERCEL_ENV: "production", KNOWLEDGE_DIR: "knowledge.example" }),
+    ).resolves.toMatch(/knowledge\.example$/);
+  });
+});

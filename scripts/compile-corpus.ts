@@ -23,18 +23,41 @@ async function exists(dir: string): Promise<boolean> {
 }
 
 /** KNOWLEDGE_DIR > a sibling private checkout > the GitHub tarball > knowledge.example. */
+/**
+ * Where the corpus comes from, in order: an explicit KNOWLEDGE_DIR, the sibling private checkout, the
+ * private repo over the network, and finally the fake example person.
+ *
+ * That last fallback is what lets a fork clone and run, but on a real deployment it is a trap: with
+ * CORPUS_REPO_TOKEN missing the build would SUCCEED and publish a site about "Nour Example" under
+ * Abdelrahman's name, and nothing about a green build would say otherwise. So a production build
+ * refuses it. ALLOW_EXAMPLE_CORPUS=1 is the deliberate opt-out for someone demoing the fork.
+ */
 export async function resolveCorpusDir(env: Record<string, string | undefined> = process.env): Promise<string> {
   if (env.KNOWLEDGE_DIR) return path.resolve(env.KNOWLEDGE_DIR);
   const sibling = path.resolve(repoRoot, "..", "portfolio-corpus");
   if (await exists(sibling)) return sibling;
   if (env.CORPUS_REPO_TOKEN) return fetchCorpus({ token: env.CORPUS_REPO_TOKEN });
+
+  assertExampleCorpusAllowed(env);
   return path.join(repoRoot, "knowledge.example");
 }
 
 /**
- * Uses the deterministic guard as the corpus lint when area A has implemented it. The canary is passed
- * empty on purpose: the guard's canary rule would otherwise fire on the marker the prompt itself carries.
+ * Throws when falling back to the example person would publish it. Separate from the resolution
+ * order so it can be tested for what it decides rather than through whichever source happens to
+ * exist on the machine running the test.
  */
+export function assertExampleCorpusAllowed(env: Record<string, string | undefined>): void {
+  const isProduction = env.VERCEL_ENV === "production" || env.NODE_ENV === "production";
+  if (isProduction && env.ALLOW_EXAMPLE_CORPUS !== "1") {
+    throw new Error(
+      "no corpus available for a production build: set CORPUS_REPO_TOKEN (a read-only token for " +
+        "the private corpus repo) or KNOWLEDGE_DIR. Refusing to fall back to knowledge.example, " +
+        "which would publish the example person's content. Set ALLOW_EXAMPLE_CORPUS=1 to demo a fork.",
+    );
+  }
+}
+
 /**
  * The corpus lint uses the same guard as runtime, but only its LEAK rules.
  *
