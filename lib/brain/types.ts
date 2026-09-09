@@ -62,4 +62,5 @@ export interface GuardVerdict {
   ok: boolean;
   rule?: GuardRule;
   replacement?: string;              // the refusal template in the session language
+  digitCarry?: string;               // digits seen so far this session; feed back as ctx.digitCarry (area A)
 }
