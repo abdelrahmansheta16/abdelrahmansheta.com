@@ -1,0 +1,97 @@
+# Pull-request and push gate. Everything that must be true before a deploy runs here.
+# The corpus is compiled from knowledge.example (fake person) so forks and CI never need the
+# private repo or CORPUS_REPO_TOKEN.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # knowledge.example is a committed fake person; the real corpus is never fetched in CI.
+  KNOWLEDGE_DIR: knowledge.example
+
+jobs:
+  verify:
+    name: lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Must run before typecheck and tests: lib/corpus/corpus.generated.ts is gitignored and
+      # several modules import it. This is a deliberate divergence from the step order in the
+      # area brief, which listed compile:corpus after typecheck.
+      - name: Compile corpus (knowledge.example)
+        run: pnpm compile:corpus
+
+      - name: Assert the compiled corpus stayed untracked
+        run: |
+          if git ls-files --error-unmatch lib/corpus/corpus.generated.ts >/dev/null 2>&1; then
+            echo "::error::lib/corpus/corpus.generated.ts is tracked. It must stay gitignored."
+            exit 1
+          fi
+
+      - run: pnpm lint
+
+      - run: pnpm format
+
+      - name: Generate Next route types
+        run: npx next typegen
+
+      - run: pnpm typecheck
+
+      - run: pnpm test
+
+      - run: pnpm guard
+
+      - name: Render the CV from the example corpus
+        run: pnpm build:cv
+
+      - name: Build
+        run: pnpm build
+        env:
+          # Dummy values: only the NEXT_PUBLIC_* vars are read at build time. No real secret is
+          # available to CI, and none is needed to produce a build.
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-dummy-anon-key
+          NEXT_PUBLIC_SITE_URL: https://example.com
+          NEXT_PUBLIC_CAL_URL: https://cal.com/example/intro
+
+  secrets:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  actions:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: raven-actions/actionlint@v2
+        with:
+          fail-on-error: true
