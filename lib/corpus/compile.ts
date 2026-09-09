@@ -215,7 +215,7 @@ export function buildGuardConfig(sources: CorpusSources, systemPrompt: string): 
     const r = byId.get(id);
     return r ? { en: r.refusal_en, ar: r.refusal_ar } : generic;
   };
-  const marker = /Internal marker: ([0-9a-f]{16})/.exec(systemPrompt);
+  const marker = /Internal marker: ([a-z]{16})/.exec(systemPrompt);
   return {
     denylist: sources.denylist,
     allowedEmails: [sources.links.contact_email, sources.links.legal_email],

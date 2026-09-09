@@ -90,10 +90,14 @@ describe("renderSystemPrompt", () => {
 });
 
 describe("canaryFor", () => {
-  it("is the first sixteen hex of sha256 of the canary-prefixed text", () => {
-    const expected = createHash("sha256").update("canary:abc", "utf8").digest("hex").slice(0, 16);
+  it("is sixteen lowercase letters derived from sha256 of the canary-prefixed text", () => {
+    // Letters, not hex: a hex marker sometimes carried enough digits to trip the guard's phone rule
+    // on its own line, so the build passed or failed on unrelated corpus content.
+    const digest = createHash("sha256").update("canary:abc", "utf8").digest();
+    let expected = "";
+    for (let i = 0; i < 16; i += 1) expected += String.fromCharCode(97 + ((digest[i] ?? 0) % 26));
     expect(canaryFor("abc")).toBe(expected);
-    expect(canaryFor("abc")).toHaveLength(16);
+    expect(canaryFor("abc")).toMatch(/^[a-z]{16}$/);
   });
 
   it("changes when a single byte of the prompt changes", () => {

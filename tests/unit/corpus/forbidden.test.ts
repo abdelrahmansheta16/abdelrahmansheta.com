@@ -98,3 +98,20 @@ describe("the example corpus must never reach production", () => {
     ).resolves.toMatch(/knowledge\.example$/);
   });
 });
+
+describe("canaryFor — the gate must not fail on a coin flip", () => {
+  it("never emits a digit, so the marker line cannot trip the phone rule", async () => {
+    const { canaryFor } = await import("@/lib/corpus/prompt");
+    // The hex version tripped the guard whenever a hash happened to carry enough digits, which made
+    // the build pass or fail on corpus content that had nothing to do with the failure.
+    for (let i = 0; i < 500; i += 1) {
+      expect(canaryFor(`corpus revision ${String(i)}`)).toMatch(/^[a-z]{16}$/);
+    }
+  });
+
+  it("is still content-derived and deterministic", async () => {
+    const { canaryFor } = await import("@/lib/corpus/prompt");
+    expect(canaryFor("abc")).toBe(canaryFor("abc"));
+    expect(canaryFor("abc")).not.toBe(canaryFor("abd"));
+  });
+})

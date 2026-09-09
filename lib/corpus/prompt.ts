@@ -368,9 +368,21 @@ function section14(sources: CorpusSources): string {
   ].join("\n");
 }
 
-/** First 16 hex of sha256("canary:" + everything rendered before section 15). */
+/**
+ * A content-derived marker, planted so the guard can detect the model reciting its own instructions.
+ *
+ * LETTERS ONLY, deliberately. It used to be hex, and roughly one corpus edit in several produced a
+ * hash carrying enough digits to trip the guard's phone rule on the marker line itself — a gate that
+ * failed on a coin flip, with a message ("system prompt: guard rule phone fired") pointing at nothing
+ * the author could fix. The first writer to hit it got green by rewording prose until the hash landed
+ * differently, which is not a fix. Sixteen letters from a 26-symbol alphabet carry more entropy than
+ * sixteen hex characters, so this is strictly better as a marker as well as unambiguous as text.
+ */
 export function canaryFor(renderedSoFar: string): string {
-  return createHash("sha256").update(`canary:${renderedSoFar}`, "utf8").digest("hex").slice(0, 16);
+  const digest = createHash("sha256").update(`canary:${renderedSoFar}`, "utf8").digest();
+  let out = "";
+  for (let i = 0; i < 16; i += 1) out += String.fromCharCode(97 + ((digest[i] ?? 0) % 26));
+  return out;
 }
 
 export function renderSystemPrompt(sources: CorpusSources): string {
