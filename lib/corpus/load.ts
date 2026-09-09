@@ -6,7 +6,7 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import matter from "gray-matter";
 import { parse as parseYaml } from "yaml";
-import { parseListFile } from "./lint";
+import { parseForbiddenPatterns, parseListFile } from "./lint";
 import type { z } from "zod";
 import {
   FaqSchema,
@@ -57,6 +57,7 @@ export interface CorpusSources {
   links: Links;
   redlines: Redline[];
   denylist: string[];
+  forbiddenPatterns: RegExp[];
   allowlist: string[];
   topics: Topics;
   voiceGuide: string;
@@ -85,6 +86,15 @@ function parseWith<S extends z.ZodTypeAny>(schema: S, data: unknown, file: strin
   const result = schema.safeParse(data);
   if (!result.success) throw formatIssues(file, result.error);
   return result.data;
+}
+
+/** Like readText, but an absent file is an empty one. For policy files a fork need not carry. */
+async function readOptionalText(dir: string, rel: string): Promise<string> {
+  try {
+    return await readFile(path.join(dir, rel), "utf8");
+  } catch {
+    return "";
+  }
 }
 
 async function readText(dir: string, rel: string): Promise<string> {
@@ -158,6 +168,11 @@ export async function loadCorpus(dir: string): Promise<LoadResult> {
 
   const denylist = parseListFile(await readText(dir, "policy/denylist.txt"));
   const allowlist = parseListFile(await readText(dir, "policy/allowlist.txt"));
+  // Optional: a corpus without the file simply has no shape rules, which is the right default for
+  // knowledge.example and for a fork that has no employer material to protect.
+  const forbiddenPatterns = parseForbiddenPatterns(
+    await readOptionalText(dir, "policy/forbidden_patterns.txt"),
+  );
   const voiceGuide = (await readText(dir, "persona/voice.md")).trimEnd();
 
   const projects: ProjectDoc[] = [];
@@ -191,6 +206,7 @@ export async function loadCorpus(dir: string): Promise<LoadResult> {
       links,
       redlines,
       denylist,
+      forbiddenPatterns,
       allowlist,
       topics,
       voiceGuide,

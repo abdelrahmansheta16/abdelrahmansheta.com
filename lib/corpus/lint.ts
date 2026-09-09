@@ -128,6 +128,50 @@ export function collectStrings(value: unknown, out: string[] = []): string[] {
  * contiguous or parseable, so that is what this looks for. The owner's real numbers are on the
  * denylist too, so the confidential rule catches them regardless.
  */
+/**
+ * Regular-expression forbidden patterns, checked in the same tier as the denylist.
+ *
+ * The denylist matches literal strings — a phone number, an address. This catches SHAPES, which is
+ * what employer-confidential material looks like: a ticket identifier, a route or row count, the
+ * vocabulary of a security finding. The project deep-dives are written from commit messages that
+ * legitimately contain all three, so the boundary between "how I work" and "my employer's unpatched
+ * attack surface" needs to be enforced by the build rather than remembered by whoever writes the
+ * next card.
+ *
+ * Lines are ECMAScript regular expressions, one per line; `#` comments and blanks are ignored. An
+ * unparseable pattern is a build failure, not a silently skipped rule — a filter that cannot compile
+ * reports safety it never measured.
+ *
+ * Matching is CASE-SENSITIVE by default. Prefix a line with `(?i)` to fold case. This is not
+ * pedantry: an `i` flag applied to `[A-Z]{2,6}-\d+` also matches lowercase, turning an
+ * identifier shape into a near-wildcard that fires on ordinary prose. Identifier shapes want case;
+ * vocabulary wants folding; the file says which per line.
+ */
+export function parseForbiddenPatterns(raw: string): RegExp[] {
+  const out: RegExp[] = [];
+  for (const line of parseListFile(raw)) {
+    const fold = line.startsWith("(?i)");
+    const body = fold ? line.slice(4) : line;
+    try {
+      out.push(new RegExp(body, fold ? "iu" : "u"));
+    } catch (cause) {
+      throw new Error(`policy/forbidden_patterns.txt: cannot compile /${body}/ — ${String(cause)}`);
+    }
+  }
+  return out;
+}
+
+/** Every forbidden pattern that matches, reported by its source form. */
+export function findForbiddenPatternHits(text: string, patterns: readonly RegExp[]): string[] {
+  const hits: string[] = [];
+  for (const pattern of patterns) {
+    // Patterns are matched against the RAW text, not the normalised form: normalisation lower-cases
+    // and strips punctuation, which would break word boundaries and identifier shapes like CRA-330.
+    if (pattern.test(text)) hits.push(pattern.source);
+  }
+  return hits;
+}
+
 export const LEAK_RULES: ReadonlySet<string> = new Set([
   "email",
   "salary",

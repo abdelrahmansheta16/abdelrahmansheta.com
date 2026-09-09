@@ -5,7 +5,13 @@ import type { CompiledCorpus, Redline } from "./schema";
 import type { GuardConfig } from "@/lib/brain/guard";
 import { loadCorpus } from "./load";
 import type { CorpusSources } from "./load";
-import { collectStrings, findAllowlistViolations, findDenylistHits, findDigitHits } from "./lint";
+import {
+  collectStrings,
+  findAllowlistViolations,
+  findDenylistHits,
+  findDigitHits,
+  findForbiddenPatternHits,
+} from "./lint";
 import { CONSENT, DISCLOSURE, renderSystemPrompt } from "./prompt";
 
 export interface CompileOptions {
@@ -112,9 +118,15 @@ export function lintCorpus(
     sources.voiceGuide,
   ];
   for (const text of everyField) {
+    for (const hit of findForbiddenPatternHits(text, sources.forbiddenPatterns)) {
+      failures.push(`a corpus field matches forbidden pattern /${hit}/`);
+    }
     for (const hit of findDenylistHits(text, sources.denylist)) {
       failures.push(`denylist: "${hit}" appears in a corpus field`);
     }
+  }
+  for (const hit of findForbiddenPatternHits(systemPrompt, sources.forbiddenPatterns)) {
+    failures.push(`system prompt: matches forbidden pattern /${hit}/`);
   }
   for (const hit of findDenylistHits(systemPrompt, sources.denylist)) {
     failures.push(`denylist: "${hit}" appears in the compiled system prompt`);
