@@ -62,3 +62,12 @@ Divergences from the plan, each forced by reality rather than preference:
 Deferred: `knowledge.example/` and `supabase/migrations/` do not exist yet, so guardrails 1-5, 8 and
 10 currently report as SKIPPED with the reason in the suite title. They run for real, unchanged, the
 moment those areas merge. `docs/MIGRATIONS.lock` lists no migrations yet.
+- 2026-09-09 — **Phase 1 complete and running.** All six areas merged; the console is mounted in the
+  hero, so every trigger on the page (both buttons, the four chips, the contact link) opens one
+  conversation. Verified against a real `next start`: `/` 200, `/ar` 200 with RTL and Masri chips,
+  `/cv` 200, `/api/health` 200. 585 tests and 117 guardrails pass; typecheck, lint and the production
+  build are clean; the 20 SQL cap tests pass against Postgres 16.
+  End-to-end text chat degrades correctly rather than crashing: DeepSeek returns 402, failover fires,
+  and the stream ends with "The answer stopped early. Try asking again." over valid SSE. Proving the
+  fallback actually *switches* rather than merely failing needs `ANTHROPIC_API_KEY`, which is an
+  owner action, as is topping up DeepSeek.

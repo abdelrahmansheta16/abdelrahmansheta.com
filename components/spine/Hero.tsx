@@ -2,6 +2,7 @@
 import corpus from "@/lib/corpus/corpus.generated";
 import { getTranslations } from "next-intl/server";
 import ConsoleTrigger from "./ConsoleTrigger";
+import Console from "@/components/console/Console";
 
 const CHIP_KEYS = ["cravit", "cost", "markets", "cv"] as const;
 
@@ -56,7 +57,29 @@ export default async function Hero({ locale }: { locale: string }) {
         ))}
       </ul>
 
-      {/* CONSOLE_MOUNT */}
+      {/*
+        The console is the AI layer over the static spine. It is a client island mounted once here and
+        opened by window CustomEvent('console:open'), so every trigger on the page — the two buttons,
+        the chips, the contact link — reaches the same conversation. Corpus data is passed in rather
+        than imported inside the client bundle, so only the public fields cross the boundary.
+      */}
+      <Console
+        locale={locale === "ar" ? "ar" : "en"}
+        consent={corpus.consent}
+        disclosure={corpus.disclosure}
+        corpus={{
+          links: corpus.links,
+          logistics: corpus.logistics,
+          proofPoints: corpus.proofPoints,
+          projects: corpus.projects.map((project) => ({
+            slug: project.slug,
+            name: project.name,
+            employer: project.employer,
+            period: project.period,
+            metrics: project.metrics,
+          })),
+        }}
+      />
     </section>
   );
 }
