@@ -6,6 +6,7 @@ import { pageMetadata } from "@/i18n/metadata";
 import SiteHeader from "@/components/layout/SiteHeader";
 import { ProfilePageJsonLd } from "@/components/spine/JsonLd";
 import { formatRange } from "@/components/spine/format";
+import ProseMesh from "@/components/motion/ProseMesh";
 
 export async function generateMetadata({
   params,
@@ -33,9 +34,10 @@ export default async function CvPage({ params }: PageProps<"/[locale]/cv">) {
     <>
       <SiteHeader locale={locale} path="/cv" />
       <main id="content" className="flex-1">
-        <article id="cv" className="mx-auto max-w-3xl px-5 py-14">
+        <article id="cv" className="relative isolate mx-auto max-w-3xl overflow-hidden px-5 py-14">
+          <ProseMesh />
           <header className="border-b border-border pb-6">
-            <h1 className="text-3xl font-semibold tracking-tight">{profile.name}</h1>
+            <h1 className="grad-text text-3xl font-semibold tracking-tight sm:text-4xl">{profile.name}</h1>
             <p className="mt-1 text-muted">{profile.headline}</p>
             <p className="mt-1 text-sm text-muted">
               {profile.location} ·{" "}
@@ -58,7 +60,7 @@ export default async function CvPage({ params }: PageProps<"/[locale]/cv">) {
               */}
               <a
                 href="/api/cv"
-                className="inline-flex rounded-full bg-accent px-4 py-2 text-sm font-semibold text-[#0b0b0c] hover:opacity-90"
+                className="glow-hover inline-flex rounded-full btn-gradient px-4 py-2 text-sm font-semibold"
               >
                 {t("download")}
               </a>

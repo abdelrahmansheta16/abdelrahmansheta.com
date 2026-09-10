@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { pageMetadata } from "@/i18n/metadata";
 import SiteHeader from "@/components/layout/SiteHeader";
+import ProseMesh from "@/components/motion/ProseMesh";
 
 const FLOW = ["s1", "s2", "s3", "s4", "s5"] as const;
 const NOT_ALLOWED = ["n1", "n2", "n3", "n4", "n5"] as const;
@@ -42,8 +43,9 @@ export default async function ArchitecturePage({ params }: PageProps<"/[locale]/
     <>
       <SiteHeader locale={locale} path="/architecture" />
       <main id="content" className="flex-1">
-        <article className="mx-auto max-w-3xl px-5 py-14">
-          <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
+        <article className="relative isolate mx-auto max-w-3xl overflow-hidden px-5 py-14">
+          <ProseMesh />
+          <h1 className="grad-text text-3xl font-semibold tracking-tight sm:text-4xl">{t("title")}</h1>
           <p className="mt-3 text-muted">{t("lede")}</p>
 
           <section className="mt-10">

@@ -3,6 +3,9 @@ import corpus from "@/lib/corpus/corpus.generated";
 import { getTranslations } from "next-intl/server";
 import { usableLink } from "@/lib/corpus/placeholders";
 import ConsoleTrigger from "./ConsoleTrigger";
+import Reveal from "@/components/motion/Reveal";
+import SectionHeading from "@/components/spine/SectionHeading";
+import MeshBackdrop from "@/components/motion/MeshBackdrop";
 
 export default async function Contact({ locale }: { locale: string }) {
   const t = await getTranslations({ locale, namespace: "contact" });
@@ -12,11 +15,13 @@ export default async function Contact({ locale }: { locale: string }) {
   const calLink = usableLink(links.cal_link);
 
   return (
-    <section id="contact" className="mx-auto max-w-5xl px-5 py-16">
-      <h2 className="text-2xl font-semibold tracking-tight">{t("title")}</h2>
-      <p className="mt-2 max-w-[var(--measure)] text-muted">{t("lede")}</p>
+    // The last section closes the page, so it gets the mesh back — the visitor ends where they began.
+    <section id="contact" className="relative isolate overflow-hidden px-5 py-24">
+      <MeshBackdrop grain={false} />
+      <div className="mx-auto max-w-5xl">
+      <SectionHeading title={t("title")} lede={t("lede")} />
 
-      <ul className="mt-6 space-y-2 text-sm">
+      <ul className="mt-8 space-y-2 text-sm">
         <li>
           <span className="me-2 text-muted">{t("email")}:</span>
           <a className="text-accent hover:underline" href={`mailto:${links.contact_email}`}>
@@ -37,7 +42,7 @@ export default async function Contact({ locale }: { locale: string }) {
         <ConsoleTrigger
           mode="text"
           prompt={t("leaveMessagePrompt")}
-          className="rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent"
+          className="glow-hover rounded-full btn-gradient px-5 py-2.5 text-sm font-semibold"
         >
           {t("leaveMessage")}
         </ConsoleTrigger>
@@ -45,11 +50,12 @@ export default async function Contact({ locale }: { locale: string }) {
           <a
             href={calLink}
             rel="noopener"
-            className="rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent"
+            className="rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent"
           >
             {t("bookCall")}
           </a>
         ) : null}
+      </div>
       </div>
     </section>
   );

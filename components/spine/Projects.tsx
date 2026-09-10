@@ -2,28 +2,29 @@
 import corpus from "@/lib/corpus/corpus.generated";
 import { getTranslations } from "next-intl/server";
 import ConsoleTrigger from "./ConsoleTrigger";
+import Reveal from "@/components/motion/Reveal";
+import SectionHeading from "@/components/spine/SectionHeading";
 
 export default async function Projects({ locale }: { locale: string }) {
   const t = await getTranslations({ locale, namespace: "projects" });
 
   return (
-    <section id="projects" className="mx-auto max-w-5xl px-5 py-16">
-      <h2 className="text-2xl font-semibold tracking-tight">{t("title")}</h2>
-      <p className="mt-2 max-w-[var(--measure)] text-muted">{t("lede")}</p>
+    <section id="projects" className="mx-auto max-w-5xl px-5 py-20">
+      <SectionHeading title={t("title")} lede={t("lede")} />
 
-      <ul className="mt-8 grid gap-4 md:grid-cols-2">
-        {corpus.projects.map((project) => (
-          <li key={project.slug}>
+      <ul className="mt-10 grid gap-4 md:grid-cols-2">
+        {corpus.projects.map((project, i) => (
+          <Reveal as="li" key={project.slug} delay={Math.min(i, 5) * 70}>
             <article
               id={`project-${project.slug}`}
-              className="flex h-full flex-col rounded-xl border border-border bg-bg-raised p-5"
+              className="grad-border glow-hover flex h-full flex-col p-5"
             >
               <div className="flex items-baseline justify-between gap-3">
                 <h3 className="text-lg font-medium">
                   <bdi dir="ltr">{project.name}</bdi>
                 </h3>
                 {project.public_level === "summary_only" ? (
-                  <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[11px] text-muted">
+                  <span className="shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] text-accent">
                     {t("summaryOnly")}
                   </span>
                 ) : null}
@@ -79,7 +80,7 @@ export default async function Projects({ locale }: { locale: string }) {
                 </ConsoleTrigger>
               </div>
             </article>
-          </li>
+          </Reveal>
         ))}
       </ul>
     </section>

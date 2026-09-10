@@ -21,6 +21,7 @@ import Transcript from "@/components/console/Transcript";
 import PromptBar, { type LangPref } from "@/components/console/PromptBar";
 import InAppBrowserSheet from "@/components/console/InAppBrowserSheet";
 import { useVoice, voiceEnabled } from "@/lib/voice/useVoice";
+import { CONSOLE_STATE_EVENT, type ConsoleStateDetail } from "@/components/spine/consoleEvents";
 
 export interface ConsoleProps {
   locale?: Locale;
@@ -178,6 +179,13 @@ export default function Console({
     window.addEventListener("console:open", onOpen);
     return () => window.removeEventListener("console:open", onOpen);
   }, [sendMessage, voice]);
+
+  // Broadcast open/closed so the floating button can step aside while the panel covers the screen.
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent<ConsoleStateDetail>(CONSOLE_STATE_EVENT, { detail: { open } }),
+    );
+  }, [open]);
 
   // Escape closes.
   useEffect(() => {

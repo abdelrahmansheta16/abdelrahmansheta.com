@@ -7,6 +7,8 @@ import path from "node:path";
 import Image from "next/image";
 import corpus from "@/lib/corpus/corpus.generated";
 import { getTranslations } from "next-intl/server";
+import Reveal from "@/components/motion/Reveal";
+import SectionHeading from "@/components/spine/SectionHeading";
 
 function photoExists(): boolean {
   try {
@@ -38,8 +40,8 @@ export default async function About({ locale }: { locale: string }) {
   ];
 
   return (
-    <section id="about" className="mx-auto max-w-5xl px-5 py-16">
-      <h2 className="text-2xl font-semibold tracking-tight">{t("title")}</h2>
+    <section id="about" className="mx-auto max-w-5xl px-5 py-20">
+      <SectionHeading title={t("title")} />
 
       <div className="mt-8 flex flex-col gap-8 sm:flex-row sm:items-start">
         <div className="shrink-0">

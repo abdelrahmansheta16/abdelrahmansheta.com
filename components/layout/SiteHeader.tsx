@@ -18,11 +18,11 @@ export default async function SiteHeader({ locale, path }: { locale: string; pat
   ];
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border/70 bg-bg/85 backdrop-blur-md">
+    <header className="sticky top-0 z-30 bg-bg/80 backdrop-blur-md after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-grad-a/60 after:to-transparent">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-5">
         <Link
           href={pathFor(locale, "/")}
-          className="text-sm font-semibold tracking-tight hover:text-accent"
+          className="text-sm font-semibold tracking-tight transition-colors hover:text-accent"
         >
           Abdelrahman&nbsp;Sheta
         </Link>

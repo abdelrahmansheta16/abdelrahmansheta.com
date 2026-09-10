@@ -10,8 +10,8 @@ export interface CardShellProps {
 
 export default function CardShell({ title, children, footer }: CardShellProps) {
   return (
-    <section className="my-2 rounded-xl border border-black/10 bg-white/70 p-3 text-sm shadow-sm backdrop-blur dark:border-white/15 dark:bg-white/5">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-60">{title}</h3>
+    <section className="grad-border my-2 bg-white/5 p-3.5 text-sm shadow-sm backdrop-blur">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-accent/80">{title}</h3>
       <div className="space-y-2">{children}</div>
       {footer ? <div className="mt-3 flex flex-wrap gap-2">{footer}</div> : null}
     </section>
@@ -32,7 +32,7 @@ export function CardButton({
   href?: string;
 }) {
   const className =
-    "inline-flex items-center rounded-lg border border-black/10 px-3 py-1.5 text-sm font-medium transition hover:bg-black/5 disabled:opacity-50 dark:border-white/20 dark:hover:bg-white/10";
+    "inline-flex items-center rounded-lg border border-white/20 px-3 py-1.5 text-sm font-medium transition hover:border-accent-dim hover:bg-white/10 disabled:opacity-50";
   if (href) {
     return (
       <a className={className} href={href} rel="noopener noreferrer">

@@ -2,21 +2,41 @@
 import corpus from "@/lib/corpus/corpus.generated";
 import { getTranslations } from "next-intl/server";
 import { formatRange } from "./format";
+import Reveal from "@/components/motion/Reveal";
+import SectionHeading from "@/components/spine/SectionHeading";
 
 export default async function Timeline({ locale }: { locale: string }) {
   const t = await getTranslations({ locale, namespace: "experience" });
 
   return (
-    <section id="experience" className="mx-auto max-w-5xl px-5 py-16">
-      <h2 className="text-2xl font-semibold tracking-tight">{t("title")}</h2>
-      <p className="mt-2 max-w-[var(--measure)] text-muted">{t("lede")}</p>
+    <section id="experience" className="mx-auto max-w-5xl px-5 py-20">
+      <SectionHeading title={t("title")} lede={t("lede")} />
 
-      <ol className="mt-8 border-s border-border">
-        {corpus.profile.roles.map((role) => (
-          <li key={`${role.company}-${role.start}`} className="relative ps-6 pb-10 last:pb-0">
+      {/*
+        The rail is a gradient rather than a flat hairline, and it fades out at the bottom so the
+        list ends rather than being cut off. Drawn on the <ol> as a background so it needs no extra
+        element, and `border-s` is replaced because a border cannot hold a gradient.
+      */}
+      <ol
+        className="relative mt-10 ps-px"
+        style={{
+          backgroundImage:
+            "linear-gradient(to bottom, var(--grad-a), var(--grad-c) 55%, transparent 100%)",
+          backgroundSize: "1px 100%",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        {corpus.profile.roles.map((role, i) => (
+          <Reveal
+            as="li"
+            key={`${role.company}-${role.start}`}
+            delay={Math.min(i, 5) * 80}
+            className="relative ps-6 pb-12 last:pb-0"
+          >
             <span
               aria-hidden="true"
-              className="absolute start-0 top-2 h-2 w-2 -translate-x-1/2 rounded-full bg-accent rtl:translate-x-1/2"
+              className="absolute start-0 top-2 h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-accent ring-4 ring-bg rtl:translate-x-1/2"
+              style={{ boxShadow: "0 0 12px 2px color-mix(in oklab, var(--grad-b) 70%, transparent)" }}
             />
             <p className="num text-xs text-muted">
               {formatRange(role.start, role.end, locale, t("present"))}
@@ -53,7 +73,7 @@ export default async function Timeline({ locale }: { locale: string }) {
                 </bdi>
               </p>
             ) : null}
-          </li>
+          </Reveal>
         ))}
       </ol>
     </section>

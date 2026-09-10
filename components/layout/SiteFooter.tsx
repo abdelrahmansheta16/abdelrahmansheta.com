@@ -8,7 +8,7 @@ export default async function SiteFooter({ locale }: { locale: string }) {
   const year = 2026;
 
   return (
-    <footer className="border-t border-border/70 bg-bg-sunken">
+    <footer className="relative isolate overflow-hidden border-t border-border/70 bg-bg-sunken">
       <div className="mx-auto flex max-w-5xl flex-col gap-3 px-5 py-10 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
         <p>
           <span className="num">© {year}</span> {corpus.profile.name}. {t("rights")}

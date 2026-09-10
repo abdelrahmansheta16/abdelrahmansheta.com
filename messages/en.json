@@ -45,7 +45,8 @@
         "label": "Show me the CV",
         "prompt": "Show me the CV"
       }
-    }
+    },
+    "orbLabel": "Animated AI orb"
   },
   "proof": {
     "title": "Proof",
@@ -211,5 +212,9 @@
   "og": {
     "tagline": "AI engineer — voice agents, retrieval, cost-bounded inference",
     "cta": "Talk to an AI version of me"
+  },
+  "fab": {
+    "label": "Open the chat and ask me anything",
+    "hint": "Ask me anything"
   }
 }

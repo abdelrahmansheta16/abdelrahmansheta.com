@@ -17,14 +17,27 @@ so `bg-bg`, `text-muted`, `border-border` and `text-accent` all resolve to the s
 | `--fg` | `#ededef` | body text |
 | `--muted` | `#9a9aa2` | secondary text, labels (7.1:1 on `--bg`) |
 | `--border` | `#26262b` | hairlines, card edges (decorative only) |
-| `--accent` | `#e8a33d` | the one warm accent: focus ring, links, metrics, the orb (9.1:1 on `--bg`) |
-| `--accent-soft` | `#2a1f0d` | metric pills behind accent text |
+| `--accent` | `#a5b4fc` | focus ring, links, metrics (9.87:1 on `--bg`) |
+| `--accent-dim` | `#818cf8` | large UI only, never body text (6.60:1) |
+| `--accent-soft` | `#171a33` | metric pills behind accent text |
+| `--grad-a` | `#6366f1` | **decoration only** — 4.40:1, must never carry text |
+| `--grad-b` | `#22d3ee` | decoration only |
+| `--grad-c` | `#a855f7` | decoration only |
 | `--font-latin` | IBM Plex Sans 400/500/600 | Latin copy |
 | `--font-arabic` | IBM Plex Sans Arabic 400/500/600 | Arabic copy |
 | `--measure` | `68ch` | maximum line length for prose |
 
 Contrast: every text/background pair in the table clears 4.5:1; `--muted` and `--accent` clear 7:1.
-There is exactly one accent. Nothing else is coloured.
+
+**Two colour layers, and the split is the rule.** Interactive colour carries meaning — links, focus,
+metrics — and is measured. Decorative colour never carries text: it is glow, borders and the ambient
+mesh, and it reuses the exact hues in `components/orb/Orb.tsx` so the site reads as an extension of
+the orb rather than a backdrop it happens to sit on.
+
+The trap is putting a decorative colour behind text. `--grad-a` is 4.40:1, under the floor: it was
+briefly the first stop of the gradient CTA with near-black text and failed there. Buttons use
+`.btn-gradient`, a separate ramp whose every stop clears 4.5:1 against `#0b0b0c` (6.60 / 10.89 /
+7.45). Gradient text (`.grad-text`) is display sizes only, where the bar is 3:1.
 
 ## Type scale
 

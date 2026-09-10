@@ -45,7 +45,8 @@
         "label": "وريني الـ CV",
         "prompt": "وريني الـ CV"
       }
-    }
+    },
+    "orbLabel": "كرة الـAI المتحركة"
   },
   "proof": {
     "title": "إثباتات",
@@ -211,5 +212,9 @@
   "og": {
     "tagline": "AI engineer — voice agents وretrieval وinference بتكلفة محدودة",
     "cta": "اتكلم مع نسخة AI مني"
+  },
+  "fab": {
+    "label": "افتح الشات واسألني اللي إنت عايزه",
+    "hint": "اسألني اللي إنت عايزه"
   }
 }

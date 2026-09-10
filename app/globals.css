@@ -18,15 +18,35 @@
  */
 @custom-variant dark (&);
 
+/*
+ * Palette. Two layers, and the split matters.
+ *
+ * INTERACTIVE colours carry meaning — links, focus, metrics — so they are measured against the
+ * background and clear WCAG. DECORATIVE colours never carry text: they are glows, borders and mesh.
+ *
+ * The decorative three are the exact hues in components/orb/Orb.tsx, so the whole site reads as an
+ * extension of the orb rather than a backdrop it happens to sit on.
+ *
+ * The obvious move — using the orb's indigo #6366f1 as the accent — is wrong: measured against
+ * --bg it is 4.40:1, under the 4.5 floor and nowhere near the 7:1 this file has always held for the
+ * accent. #a5b4fc is the same hue family at 9.87:1.
+ */
 :root {
   --bg: #0b0b0c;
   --bg-raised: #121214;
   --bg-sunken: #080809;
-  --fg: #ededef;
-  --muted: #9a9aa2;
+  --fg: #ededef; /* 16.83:1 on --bg */
+  --muted: #9a9aa2; /* 7.04:1 */
   --border: #26262b;
-  --accent: #e8a33d; /* one warm accent, used for focus, links and the living element */
-  --accent-soft: #2a1f0d;
+
+  --accent: #a5b4fc; /* 9.87:1 — links, focus ring, metrics */
+  --accent-dim: #818cf8; /* 6.60:1 — large UI only, never body text */
+  --accent-soft: #171a33; /* tinted plate behind accent text */
+
+  /* Decoration only. Never put text in these. */
+  --grad-a: #6366f1;
+  --grad-b: #22d3ee;
+  --grad-c: #a855f7;
 
   --measure: 68ch;
   --step: 0.25rem;
@@ -61,7 +81,11 @@
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
   --color-accent-soft: var(--accent-soft);
+  --color-grad-a: var(--grad-a);
+  --color-grad-b: var(--grad-b);
+  --color-grad-c: var(--grad-c);
   --font-latin: var(--font-latin);
   --font-arabic: var(--font-arabic);
 }
@@ -146,4 +170,204 @@ a {
 /* Anchored sections must clear the sticky header when a tool scrolls to them. */
 [id] {
   scroll-margin-top: 5rem;
+}
+
+/* ==========================================================================
+   Motion and decoration
+   --------------------------------------------------------------------------
+   All of it is CSS on purpose. The prefers-reduced-motion block above already
+   neutralises every animation and transition in this file, so nothing added
+   here needs its own reduced-motion branch — only motion/react components do,
+   and Orb.tsx already calls useReducedMotion().
+
+   Everything below is decorative. Mark the elements aria-hidden.
+   ========================================================================== */
+
+/* Animatable angle for the conic borders. Unsupported browsers just get a
+   static gradient, which is the intended fallback rather than a broken one. */
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* --- ambient mesh --------------------------------------------------------
+   Three drifting blobs from one element: the element's own background plus
+   ::before and ::after. Animating transform (not background-position) keeps
+   this on the compositor; the blur is capped at 60px because large blur radii
+   are what actually cost frames on mobile GPUs. */
+@keyframes mesh-drift-a {
+  0%, 100% { transform: translate3d(-6%, -4%, 0) scale(1); }
+  50%      { transform: translate3d(5%, 3%, 0) scale(1.18); }
+}
+@keyframes mesh-drift-b {
+  0%, 100% { transform: translate3d(4%, 6%, 0) scale(1.1); }
+  50%      { transform: translate3d(-5%, -3%, 0) scale(0.94); }
+}
+
+.mesh {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+}
+.mesh::before,
+.mesh::after {
+  content: "";
+  position: absolute;
+  inset: -25%;
+  filter: blur(60px);
+  will-change: transform;
+}
+.mesh::before {
+  background:
+    radial-gradient(38% 42% at 22% 28%, color-mix(in oklab, var(--grad-a) 42%, transparent), transparent 70%),
+    radial-gradient(32% 36% at 78% 18%, color-mix(in oklab, var(--grad-b) 30%, transparent), transparent 72%);
+  animation: mesh-drift-a 24s ease-in-out infinite;
+}
+.mesh::after {
+  background:
+    radial-gradient(40% 44% at 68% 72%, color-mix(in oklab, var(--grad-c) 34%, transparent), transparent 70%);
+  animation: mesh-drift-b 31s ease-in-out infinite;
+}
+/* Paused by Reveal's observer when the host section leaves the viewport. */
+.mesh[data-paused="true"]::before,
+.mesh[data-paused="true"]::after {
+  animation-play-state: paused;
+}
+
+/* --- film grain ----------------------------------------------------------
+   Breaks up the banding that large blurred gradients produce on 8-bit panels. */
+.grain {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* --- gradient border -----------------------------------------------------
+   A 1px conic ring drawn with a mask so the fill stays flat and readable.
+   Brightens on hover; the angle only spins on hover to avoid dozens of
+   permanently animating cards on one page. */
+@keyframes border-spin { to { --angle: 360deg; } }
+
+.grad-border {
+  position: relative;
+  border-radius: 0.85rem;
+  background: var(--bg-raised);
+}
+.grad-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--angle),
+    var(--grad-a), var(--grad-b), var(--grad-c), var(--grad-a)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0.28;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.grad-border:hover::before,
+.grad-border:focus-within::before {
+  opacity: 0.85;
+  animation: border-spin 5s linear infinite;
+}
+
+/* --- hover lift ----------------------------------------------------------- */
+.glow-hover {
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.32s ease;
+}
+.glow-hover:hover,
+.glow-hover:focus-within {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 44px -16px color-mix(in oklab, var(--grad-a) 60%, transparent);
+}
+
+/* --- scroll reveal -------------------------------------------------------
+   The hidden state is scoped to `.js`, set by an inline script in the layout
+   before first paint. Without JavaScript the class never lands, nothing is
+   ever hidden, and the page still reads in full — which is a stated property
+   of this site, not an accident. */
+.reveal {
+  transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.js .reveal {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+}
+.js .reveal[data-shown="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* --- gradient text -------------------------------------------------------
+   Only for large display type. Every stop clears 3:1 on --bg, which is the
+   bar for large text; --grad-a is deliberately absent because at 4.40:1 it
+   would be the weakest link in a headline. */
+.grad-text {
+  background: linear-gradient(100deg, var(--fg) 0%, var(--grad-b) 48%, var(--grad-c) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* --- shimmer, for streaming and skeletons -------------------------------- */
+@keyframes shimmer-sweep { to { background-position: -200% 0; } }
+.shimmer {
+  background: linear-gradient(90deg, var(--muted) 0%, var(--fg) 45%, var(--muted) 90%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer-sweep 2.4s linear infinite;
+}
+
+/* --- section heading rule ------------------------------------------------- */
+.grad-rule {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(90deg, var(--grad-a), var(--grad-b) 40%, transparent 85%);
+  opacity: 0.55;
+}
+
+/* --- pulse ring, for the floating chat button ----------------------------- */
+@keyframes fab-pulse {
+  0%   { transform: scale(1);    opacity: 0.55; }
+  70%  { transform: scale(1.75); opacity: 0; }
+  100% { transform: scale(1.75); opacity: 0; }
+}
+.fab-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 1px solid var(--accent-dim);
+  animation: fab-pulse 2.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  pointer-events: none;
+}
+
+/* --- gradient call-to-action ---------------------------------------------
+   A separate gradient from the decorative one, and it has to be.
+
+   The decorative stops are chosen to look right as glow behind content. Put
+   near-black text on them and --grad-a (#6366f1) gives 4.40:1, under the 4.5
+   floor for a 14px semibold label. Every stop below clears it against
+   #0b0b0c: #818cf8 6.60, #22d3ee 10.89, #c084fc 7.45.
+
+   One class rather than repeated utilities so the button on the hero, the one
+   in the contact block and the CV download cannot drift apart. */
+.btn-gradient {
+  background-image: linear-gradient(100deg, #818cf8 0%, #22d3ee 52%, #c084fc 100%);
+  color: #0b0b0c;
 }
