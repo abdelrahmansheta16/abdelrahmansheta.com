@@ -41,6 +41,11 @@ export const TEMPERATURE = 0.6;
 
 const SENTENCE_TERMINATORS = new Set([".", "?", "!", "؟", "\n"]);
 
+/** True when the character at `i` has a digit on both sides — i.e. it is a decimal point. */
+function isBetweenDigits(text: string, i: number): boolean {
+  return /\d/.test(text[i - 1] ?? "") && /\d/.test(text[i + 1] ?? "");
+}
+
 /** Guard rules plus the input-side heuristic, which is not a corpus red line. */
 export type BrainGuardRule = GuardRule | "injection";
 
@@ -198,7 +203,13 @@ export class SentenceBuffer {
 
   private findCut(): number | null {
     for (let i = 0; i < this.buffer.length; i += 1) {
-      if (SENTENCE_TERMINATORS.has(this.buffer[i])) return i + 1;
+      if (!SENTENCE_TERMINATORS.has(this.buffer[i])) continue;
+      // A '.' between two digits is a decimal point, not a full stop. Cutting there split the
+      // public CV figures the guard allowlists — "99.95% uptime" became "99." + "95% uptime", so
+      // the allowlist entry never matched either half and the phone rule fired on an ordinary
+      // answer. Same for "$1.2B" and "2,100" style separators.
+      if (this.buffer[i] === "." && isBetweenDigits(this.buffer, i)) continue;
+      return i + 1;
     }
     if (this.buffer.length >= SENTENCE_SOFT_LIMIT) {
       const target = this.buffer.length - SENTENCE_HOLD_BACK;
@@ -288,13 +299,27 @@ export async function* runBrain(opts: RunBrainOptions): AsyncIterable<BrainEvent
     const verdict = guard.checkSentence(sentence, { locale, lastUserTurn, digitCarry });
     if (!verdict.ok) {
       const replacement = verdict.replacement ?? "";
+      // Carry forward even on a block, so getting one sentence refused cannot reset the
+      // accumulator and let the next few digits through.
+      digitCarry = verdict.digitCarry ?? digitCarry;
       yield { type: "guard", rule: verdict.rule ?? "confidential", sha256: await digest(sentence) };
       yield { type: "sentence", text: replacement, blocked: true };
       if (replacement.length > 0) yield { type: "text", delta: replacement };
       return;
     }
 
-    digitCarry = `${digitCarry}${digitsOf(sentence)}`.slice(-24);
+    /**
+     * Take the guard's own carry, never recompute it.
+     *
+     * The guard masks YEAR_SPAN and PERCENT_SPAN before counting and resets the carry to "" when a
+     * sentence contributes no countable digits. Rebuilding it here from `digitsOf(sentence)` — every
+     * raw digit, nothing masked, never reset — meant ordinary CV talk poisoned it: "the replatform
+     * ran from 2021 to 2024" stored "20212024", eight characters, and the phone rule fires at
+     * carryIn.length + sentenceDigits.length >= 7. So the *next* sentence, with no digits at all,
+     * came back as the phone refusal, and since the blocked path returned without clearing the
+     * carry, every remaining sentence of the answer did too.
+     */
+    digitCarry = verdict.digitCarry ?? "";
 
     // 7 — speech normalisation, voice only
     const text =
