@@ -5,7 +5,7 @@
  * findings for a current employer. The CV-level architecture is fair game; the findings are not.
  * These cases are sanitised paraphrases of the real shapes, and they must fail the build.
  */
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { findForbiddenPatternHits, parseForbiddenPatterns } from "@/lib/corpus/lint";
 
 const POLICY = `
@@ -115,3 +115,44 @@ describe("canaryFor — the gate must not fail on a coin flip", () => {
     expect(canaryFor("abc")).not.toBe(canaryFor("abd"));
   });
 })
+
+/**
+ * A build that says "set CORPUS_REPO_TOKEN" when you believe you have is four indistinguishable
+ * causes wearing one message. These assert the diagnostic separates them — and that it never
+ * prints the value.
+ */
+describe("describeCorpusEnv", () => {
+  let DESCRIBE: (env: Record<string, string | undefined>) => string;
+  beforeAll(async () => {
+    ({ describeCorpusEnv: DESCRIBE } = await import("@/scripts/compile-corpus"));
+  });
+
+  it("distinguishes not set from set but empty", () => {
+    expect(DESCRIBE({})).toContain("CORPUS_REPO_TOKEN: not set");
+    expect(DESCRIBE({ CORPUS_REPO_TOKEN: "   " })).toContain(
+      "CORPUS_REPO_TOKEN: set but EMPTY",
+    );
+  });
+
+  it("reports the length of a present token, never the token", () => {
+    const secret = "github_pat_" + "x".repeat(50);
+    const out = DESCRIBE({ CORPUS_REPO_TOKEN: secret });
+    expect(out).toContain(`set, ${secret.length} chars`);
+    expect(out).not.toContain(secret);
+    expect(out).not.toContain("github_pat_");
+  });
+
+  it("ignores surrounding whitespace when measuring, as the resolver does", () => {
+    expect(DESCRIBE({ CORPUS_REPO_TOKEN: "  abcd\n" })).toContain("set, 4 chars");
+  });
+
+  it("lists corpus-ish variable names so a typo is visible", () => {
+    const out = DESCRIBE({ CORPUS_REPO_TOKN: "x", UNRELATED: "y" });
+    expect(out).toContain("CORPUS_REPO_TOKN");
+    expect(out).not.toContain("UNRELATED");
+  });
+
+  it("reports which environment the build thinks it is in", () => {
+    expect(DESCRIBE({ VERCEL_ENV: "production" })).toContain("VERCEL_ENV=production");
+  });
+});

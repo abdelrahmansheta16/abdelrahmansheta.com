@@ -36,10 +36,41 @@ export async function resolveCorpusDir(env: Record<string, string | undefined> =
   if (env.KNOWLEDGE_DIR) return path.resolve(env.KNOWLEDGE_DIR);
   const sibling = path.resolve(repoRoot, "..", "portfolio-corpus");
   if (await exists(sibling)) return sibling;
-  if (env.CORPUS_REPO_TOKEN) return fetchCorpus({ token: env.CORPUS_REPO_TOKEN });
+  // Trimmed: a token pasted into a dashboard field routinely picks up a trailing newline or space,
+  // which is truthy here and then fails authentication at GitHub with an opaque 401.
+  const token = (env.CORPUS_REPO_TOKEN ?? "").trim();
+  if (token.length > 0) return fetchCorpus({ token });
 
   assertExampleCorpusAllowed(env);
   return path.join(repoRoot, "knowledge.example");
+}
+
+/**
+ * Describes what the build could see, without ever printing a secret.
+ *
+ * A build that fails with "set CORPUS_REPO_TOKEN" when you believe you have set it is a guessing
+ * game between four indistinguishable causes: not set at all, set but empty, set for Preview only
+ * so the Production build never sees it, or the name mistyped. Each costs a full push-and-wait
+ * cycle to eliminate. Reporting presence and length settles it in one build — length alone
+ * separates "empty" from "present", and never reveals the value.
+ */
+export function describeCorpusEnv(env: Record<string, string | undefined>): string {
+  const seen = (name: string): string => {
+    const raw = env[name];
+    if (raw === undefined) return `${name}: not set`;
+    const trimmed = raw.trim();
+    if (trimmed.length === 0) return `${name}: set but EMPTY`;
+    return `${name}: set, ${trimmed.length} chars`;
+  };
+  const near = Object.keys(env)
+    .filter((k) => /CORPUS|KNOWLEDGE/i.test(k))
+    .sort();
+  return [
+    `  VERCEL_ENV=${env.VERCEL_ENV ?? "(unset)"} NODE_ENV=${env.NODE_ENV ?? "(unset)"}`,
+    `  ${seen("CORPUS_REPO_TOKEN")}`,
+    `  ${seen("KNOWLEDGE_DIR")}`,
+    `  corpus-ish names visible to this build: ${near.length > 0 ? near.join(", ") : "(none)"}`,
+  ].join("\n");
 }
 
 /**
@@ -53,7 +84,11 @@ export function assertExampleCorpusAllowed(env: Record<string, string | undefine
     throw new Error(
       "no corpus available for a production build: set CORPUS_REPO_TOKEN (a read-only token for " +
         "the private corpus repo) or KNOWLEDGE_DIR. Refusing to fall back to knowledge.example, " +
-        "which would publish the example person's content. Set ALLOW_EXAMPLE_CORPUS=1 to demo a fork.",
+        "which would publish the example person's content. Set ALLOW_EXAMPLE_CORPUS=1 to demo a fork.\n" +
+        "What this build could actually see:\n" +
+        describeCorpusEnv(env) +
+        "\nIf it says 'not set' but you added it: the variable is probably scoped to Preview only, " +
+        "or was added after this build started — Vercel does not rebuild when variables change.",
     );
   }
 }
