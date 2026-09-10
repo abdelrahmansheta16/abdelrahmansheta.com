@@ -2,9 +2,11 @@
 #
 # Regenerate after appending a NEW migration (never after editing an existing one):
 #
-#     ( head -n 6 docs/MIGRATIONS.lock ; shasum -a 256 supabase/migrations/*.sql ) > /tmp/m.lock \
+#     ( head -n 7 docs/MIGRATIONS.lock ; shasum -a 256 supabase/migrations/*.sql ) > /tmp/m.lock \
 #       && mv /tmp/m.lock docs/MIGRATIONS.lock
 #
 592cc0f90e68d0a47e0285e498ae92f311160b92fb1585dd78d91de58bc2f6f7  supabase/migrations/0001_init.sql
 30026d0d9fb9d78b02d50ed9b2e021716a1d5084229b57718a1075990b7232ce  supabase/migrations/0002_functions.sql
 28fadb7954af231184ea3c8790958d24c34db52d70c9c2fdf22007664718b391  supabase/migrations/0003_cron.sql
+fa4aa1233c399054f974e1eee203dda22a4519ba30c7d2e4d54b49d6dba2fc4d  supabase/migrations/0004_revoke_public_execute.sql
+3f743f90a6ce356cae7701914b0a4bb8b50be31799ff3fc857ca8d4480e8c30d  supabase/migrations/0005_revoke_execute_from_public.sql

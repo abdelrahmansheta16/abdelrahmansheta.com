@@ -57,6 +57,42 @@ describe.skipIf(!MIGRATIONS_READY)(
     it("takes a row lock so two mints cannot both fit under the cap", () => {
       expect(migrationSql()).toMatch(/for\s+update/i);
     });
+
+    /**
+     * A cap that anyone on the internet can call is not a cap. Postgres grants EXECUTE on a new
+     * function to PUBLIC by default, and PostgREST exposes every function in `public` at
+     * /rest/v1/rpc/<name> to the anonymous key. Revoking from `anon` and `authenticated` is a
+     * no-op against that default — it has to be revoked from PUBLIC itself. This was live for a
+     * few minutes; the probe that found it burned real budget seconds.
+     */
+    it("revokes EXECUTE from PUBLIC, including on functions added later", () => {
+      const sql = migrationSql().toLowerCase().replace(/\s+/g, " ");
+      expect(sql, "revoke execute on all functions in schema public from public").toMatch(
+        /revoke execute on all functions in schema public from public/,
+      );
+      expect(sql, "future functions must not be granted to PUBLIC either").toMatch(
+        /alter default privileges in schema public revoke execute on functions from public/,
+      );
+    });
+
+    it("revokes EXECUTE from PUBLIC on every security definer function by name", () => {
+      const sql = migrationSql();
+      const defined = [
+        ...sql.matchAll(
+          /create\s+(?:or\s+replace\s+)?function\s+(?:public\.)?(\w+)\s*\(([^)]*)\)[\s\S]*?security\s+definer/gi,
+        ),
+      ].map((m) => m[1].toLowerCase());
+
+      const flat = sql.toLowerCase().replace(/\s+/g, " ");
+      const unrevoked = [...new Set(defined)].filter(
+        (name) => !flat.includes(`revoke execute on function public.${name}(`),
+      );
+
+      expect(defined.length, "expected security definer functions in the migrations").toBeGreaterThan(
+        0,
+      );
+      expect(unrevoked, "add an explicit revoke ... from public for these").toEqual([]);
+    });
   },
 );
 
