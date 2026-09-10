@@ -10,6 +10,9 @@ export type Bilingual = Readonly<Record<Locale, string>>;
 
 export const S = {
   badge: { en: "AI version of Abdelrahman", ar: "النسخة الـAI من عبدالرحمن" },
+  // The privacy page tells a visitor to quote this when asking for their data to be deleted,
+  // so it has to be somewhere they can actually read it.
+  sessionCode: { en: "Session code", ar: "كود الجلسة" },
   openConsole: { en: "Talk to me", ar: "اتكلم معايا" },
   typeInstead: { en: "Type instead", ar: "اكتب بدل ما تتكلم" },
   close: { en: "Close", ar: "اقفل" },

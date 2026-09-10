@@ -215,6 +215,13 @@ export default function Console({
     if (start !== null && end !== undefined && end - start > 80) setOpen(false);
   };
 
+  /**
+   * getSessionId() reads a module-level variable that /api/chat's response header sets, not React
+   * state, so it is deliberately recomputed on each render rather than held in a ref: `messages`
+   * changing is what re-renders us, and that is exactly when a new id can have arrived.
+   */
+  const sessionCode = getSessionId();
+
   const orbState: OrbState = useMemo(() => {
     if (!voiceEnabled()) return "text-only";
     if (voice.blockedReason === "capped_global" || voice.blockedReason === "capped_visitor") return "capped";
@@ -304,6 +311,22 @@ export default function Console({
       </header>
 
       <p className="px-4 py-2 text-[11px] leading-snug opacity-60">{disclosure[locale]}</p>
+
+      {/*
+        The privacy page tells a visitor to "quote the session code shown in the console" when
+        asking for their data to be erased — but the id only ever went into a request body and was
+        never rendered anywhere, so the stated erasure route could not be followed by anyone. It
+        appears once /api/chat has minted one, which is also the first moment there is data to
+        erase. select-all so it can be copied in one gesture on a phone.
+      */}
+      {sessionCode !== null ? (
+        <p className="px-4 pb-2 text-[11px] opacity-45">
+          {t("sessionCode", locale)}:{" "}
+          <bdi dir="ltr" className="select-all font-mono">
+            {sessionCode}
+          </bdi>
+        </p>
+      ) : null}
 
       <Transcript messages={messages} locale={locale} corpus={corpus} />
 
