@@ -123,3 +123,44 @@ describe("hygiene — no real contact details in the tracked tree", () => {
     expect(hits).toEqual([]);
   });
 });
+
+/**
+ * `botid` was a dependency, and `isHuman()` called `checkBotId()`, but nothing wired the plugin into
+ * the build or declared a protected route — so the check could never reach a verdict and every
+ * `isHuman()` gate in front of every paid endpoint returned true for everyone. A dependency that is
+ * imported but not installed looks exactly like one that works, which is why this is asserted rather
+ * than assumed.
+ */
+describe("hygiene — bot protection is actually wired", () => {
+  const config = readIfExists("next.config.ts") ?? "";
+  const layout = readIfExists("app/[locale]/layout.tsx") ?? "";
+
+  it("applies withBotId in next.config.ts", () => {
+    expect(config).toContain("withBotId");
+    expect(config).toMatch(/export default withBotId\(/);
+  });
+
+  it("renders BotIdClient in the root layout", () => {
+    expect(layout).toContain("BotIdClient");
+  });
+
+  it("declares every endpoint that isHuman() guards", () => {
+    const guarded = new Set<string>();
+    for (const file of walk("app/api", [".ts"])) {
+      // Route handlers only: _lib/http.ts defines isHuman and _lib/sideEffects.ts calls it, and
+      // neither of those is an endpoint a visitor can reach.
+      if (!file.endsWith(`${path.sep}route.ts`)) continue;
+      if (!readFileSync(file, "utf8").includes("isHuman()")) continue;
+      const route = path
+        .relative(REPO_ROOT, file)
+        .split(path.sep)
+        .join("/")
+        .replace(/^app/, "")
+        .replace(/\/route\.ts$/, "");
+      guarded.add(route);
+    }
+    expect(guarded.size, "expected some routes to call isHuman()").toBeGreaterThan(0);
+    const undeclared = [...guarded].filter((r) => !layout.includes(`"${r}"`)).sort();
+    expect(undeclared, "add these to PROTECTED_ROUTES in the root layout").toEqual([]);
+  });
+});
