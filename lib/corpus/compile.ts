@@ -13,6 +13,7 @@ import {
   findForbiddenPatternHits,
 } from "./lint";
 import { CONSENT, DISCLOSURE, renderSystemPrompt } from "./prompt";
+import { isPlaceholder } from "./placeholders";
 
 export interface CompileOptions {
   dir: string; // path to a corpus directory (private repo checkout or knowledge.example)
@@ -275,6 +276,22 @@ export async function compileCorpus(opts: CompileOptions): Promise<CompileResult
     warnings.push(`system prompt is ${tokenEstimate} tokens, over the ${TOKEN_WARN} warning threshold`);
   }
 
+  // Unfilled link fields become empty strings, and warn.
+  //
+  // `links.cal_link` was still "OWNER TO FILL: https://cal.com/<handle>/intro" while the site was
+  // ready to deploy, and the homepage used that sentence as the href of its primary call-to-action.
+  // Both call sites now guard with usableLink(), but emptying the value here is what makes
+  // "unfilled" and "absent" the same thing for a consumer written later, which is the failure mode
+  // that produced this bug in the first place. A warning rather than an error: an unset booking link
+  // is a legitimate state, and the site degrades correctly without one.
+  const links = { ...sources.links } as Record<string, string>;
+  for (const [field, value] of Object.entries(links)) {
+    if (isPlaceholder(value)) {
+      links[field] = "";
+      warnings.push(`links.${field} is still an "OWNER TO FILL" placeholder; compiled as empty`);
+    }
+  }
+
   const corpus: CompiledCorpus = {
     version: createHash("sha256").update(systemPrompt, "utf8").digest("hex").slice(0, 12),
     builtAt: new Date().toISOString(),
@@ -283,7 +300,7 @@ export async function compileCorpus(opts: CompileOptions): Promise<CompileResult
     profile: sources.profile,
     proofPoints: sources.proofPoints,
     logistics: sources.logistics,
-    links: sources.links,
+    links: links as CompiledCorpus["links"],
     redlines: sources.redlines,
     topics: sources.topics,
     pronunciation: sources.pronunciation,

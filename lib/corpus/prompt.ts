@@ -7,6 +7,7 @@ import { TOOL_NAMES, TOOLS } from "@/lib/tools/schema";
 import type { ToolName } from "@/lib/tools/schema";
 import type { CorpusSources, OpinionDoc, ProjectDoc, StoryDoc } from "./load";
 import type { Faq, Logistics, Profile, ProofPoint, Redline } from "./schema";
+import { isPlaceholder } from "./placeholders";
 
 /** Spoken at session start and repeated in turn 1 when the greeting did not play (invariant 10). */
 export const DISCLOSURE = {
@@ -162,8 +163,12 @@ function section7(profile: Profile, proofPoints: ProofPoint[]): string {
     return head.join("\n");
   });
 
+  // An unfilled field is absent, not empty-ish. `scale_claims` still held its "OWNER TO FILL: ..."
+  // note, so the agent's prompt carried a second-person TODO addressed to the owner ("which
+  // surfaces you personally owned versus led") as though it were a fact about him — recitable to a
+  // recruiter, and in conflict with the first-person persona two sections above.
   const scope = sortedEntries(profile.scope_notes)
-    .filter(([, value]) => value.trim().length > 0)
+    .filter(([, value]) => value.trim().length > 0 && !isPlaceholder(value))
     .map(([key, value]) => `- ${key}: ${value}`);
 
   const skills = sortedEntries(

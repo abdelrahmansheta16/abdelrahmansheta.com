@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import type { Locale } from "@/lib/tools/schema";
 import CardShell, { CardButton } from "@/components/cards/CardShell";
 import { t } from "@/components/console/strings";
+import { usableLink } from "@/lib/corpus/placeholders";
 
 const Cal = dynamic(() => import("@calcom/embed-react").then((m) => m.default), {
   ssr: false,
@@ -14,7 +15,9 @@ const Cal = dynamic(() => import("@calcom/embed-react").then((m) => m.default), 
 });
 
 export default function BookCallCard({ locale, calLink }: { locale: Locale; calLink?: string }) {
-  const link = calLink ?? process.env.NEXT_PUBLIC_CAL_URL;
+  // usableLink treats an unfilled "OWNER TO FILL: ..." corpus field as absent, so this falls through
+  // to the "booking unavailable" state instead of embedding a placeholder sentence as a Cal handle.
+  const link = usableLink(calLink) ?? usableLink(process.env.NEXT_PUBLIC_CAL_URL);
   if (!link) {
     return (
       <CardShell title={t("bookCall", locale)}>

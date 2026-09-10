@@ -143,6 +143,16 @@ describe.skipIf(!GUARD_READY)(
       }
     });
 
+    /**
+     * `scale_claims` still held its intake placeholder, so the prompt carried a second-person TODO
+     * addressed to the owner ("which surfaces you personally owned versus led") as if it were a
+     * fact about him — recitable to a recruiter, and contradicting the first-person persona. An
+     * unfilled field must be absent from the prompt, not rendered as content.
+     */
+    it("renders no unfilled placeholder into the system prompt", () => {
+      expect(shipped.systemPrompt).not.toContain("OWNER TO FILL");
+    });
+
     it("keeps every summary_only body out of the system prompt", () => {
       for (const project of shipped.projects) {
         if (project.public_level !== "summary_only") continue;

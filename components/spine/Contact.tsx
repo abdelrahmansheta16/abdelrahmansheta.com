@@ -1,12 +1,15 @@
 /** Contact: the one allowed email address, LinkedIn, the message trigger and the booking link. */
 import corpus from "@/lib/corpus/corpus.generated";
 import { getTranslations } from "next-intl/server";
+import { usableLink } from "@/lib/corpus/placeholders";
 import ConsoleTrigger from "./ConsoleTrigger";
 
 export default async function Contact({ locale }: { locale: string }) {
   const t = await getTranslations({ locale, namespace: "contact" });
   const { links } = corpus;
-  const hasCal = links.cal_link.trim().length > 0;
+  // Not merely "non-empty": an unfilled field still holds its "OWNER TO FILL: ..." placeholder, and
+  // rendering the primary call-to-action with that sentence as its href sends a recruiter nowhere.
+  const calLink = usableLink(links.cal_link);
 
   return (
     <section id="contact" className="mx-auto max-w-5xl px-5 py-16">
@@ -38,9 +41,9 @@ export default async function Contact({ locale }: { locale: string }) {
         >
           {t("leaveMessage")}
         </ConsoleTrigger>
-        {hasCal ? (
+        {calLink !== undefined ? (
           <a
-            href={links.cal_link}
+            href={calLink}
             rel="noopener"
             className="rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent"
           >
