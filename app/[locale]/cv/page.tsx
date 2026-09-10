@@ -51,6 +51,11 @@ export default async function CvPage({ params }: PageProps<"/[locale]/cv">) {
                 rate-limits per ip_hash (5/day) and redirects to /cv.pdf, which `pnpm build` now
                 generates, so the target exists in the deployment instead of 404ing.
               */}
+              {/*
+                eslint-disable-next-line @next/next/no-html-link-for-pages --
+                /api/cv is a route handler that 302s to a PDF, not a page. <Link> would client-side
+                navigate, which cannot deliver a file download.
+              */}
               <a
                 href="/api/cv"
                 className="inline-flex rounded-full bg-accent px-4 py-2 text-sm font-semibold text-[#0b0b0c] hover:opacity-90"
