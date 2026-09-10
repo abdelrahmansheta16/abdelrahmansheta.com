@@ -143,3 +143,56 @@ describe("invariant 5 — migrations are append-only", () => {
     expect(missing, "regenerate docs/MIGRATIONS.lock — see the header in that file").toEqual([]);
   });
 });
+
+/**
+ * Retention only means something if a row can actually reach its delete_after.
+ *
+ * leads.delete_after is created_at + 180 days, but the row also had
+ * `references sessions(id) on delete cascade` while sessions expire at 30 days — so purge_expired()
+ * destroyed every lead 150 days early, and because it went through a cascade the purge counter did
+ * not even attribute the rows to leads. A recruiter's contact details are the actual output of this
+ * system; losing them silently is the worst kind of data loss.
+ */
+describe.skipIf(!MIGRATIONS_READY)(
+  suite("retention — a row cannot outlive its parent by cascade", MIGRATIONS_READY, WHY),
+  () => {
+    /** `create table public.<name> ( ... );` bodies from the migrations, latest definition wins. */
+    function tableBodies(): Map<string, string> {
+      const out = new Map<string, string>();
+      const re = /create table (?:if not exists )?public\.(\w+)\s*\(([\s\S]*?)\n\);/g;
+      for (const m of migrationSql().matchAll(re)) out.set(m[1], m[2]);
+      return out;
+    }
+
+    function retentionDays(body: string): number | null {
+      const m = /delete_after[^\n]*interval '(\d+) days'/.exec(body);
+      return m ? Number(m[1]) : null;
+    }
+
+    it("no table outlives sessions while cascading from it", () => {
+      const bodies = tableBodies();
+      const sessionDays = retentionDays(bodies.get("sessions") ?? "");
+      expect(sessionDays, "sessions must declare a retention").not.toBeNull();
+
+      const sql = migrationSql();
+      const offenders: string[] = [];
+      for (const [name, body] of bodies) {
+        if (name === "sessions") continue;
+        const days = retentionDays(body);
+        if (days === null || sessionDays === null || days <= sessionDays) continue;
+        if (!/references public\.sessions \(id\)/.test(body)) continue;
+
+        // The original definition may be corrected by a later ALTER, so check the final state.
+        const altered = new RegExp(
+          `alter table public\\.${name}[\\s\\S]*?references public\\.sessions \\(id\\) on delete set null`,
+          "i",
+        ).test(sql);
+        const cascadesInline = /references public\.sessions \(id\) on delete cascade/i.test(body);
+        if (cascadesInline && !altered) {
+          offenders.push(`${name} keeps ${days}d but cascades from sessions (${sessionDays}d)`);
+        }
+      }
+      expect(offenders, "use `on delete set null`, as spend_events and llm_calls do").toEqual([]);
+    });
+  },
+);
