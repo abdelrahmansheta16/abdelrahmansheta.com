@@ -1,6 +1,23 @@
 /* Design tokens + base typography for the spine. Dark, near-black, one warm accent. See docs/DESIGN.md. */
 @import "tailwindcss";
 
+/*
+ * This site is dark-only: `:root` below sets `color-scheme: dark` and `--fg` to near-white, and
+ * there is no light palette anywhere. The console subsystem, though, was written light-first —
+ * `bg-white/95` panel, `bg-white/70` cards, `bg-white` inputs — with `dark:` utilities layered on.
+ *
+ * Tailwind's default `dark` variant keys off `prefers-color-scheme`, which reports the VISITOR'S OS
+ * setting and says nothing about this site's own theme. So for anyone whose OS was in light mode
+ * none of those `dark:` utilities applied: the chat panel rendered white while the text colour it
+ * inherited from `html` stayed #ededef. Near-white on white, roughly 1.1:1 — the primary feature of
+ * the site was effectively invisible to a large share of visitors.
+ *
+ * Redefining the variant to always match is the smallest change consistent with the stated design:
+ * the site is always dark, so the dark styles always win. If a real light theme is ever added,
+ * delete this line and give the tokens a `prefers-color-scheme: light` block instead.
+ */
+@custom-variant dark (&);
+
 :root {
   --bg: #0b0b0c;
   --bg-raised: #121214;
