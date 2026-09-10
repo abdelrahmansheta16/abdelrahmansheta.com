@@ -222,6 +222,7 @@ export default function Console({
    */
   const sessionCode = getSessionId();
 
+
   const orbState: OrbState = useMemo(() => {
     if (!voiceEnabled()) return "text-only";
     if (voice.blockedReason === "capped_global" || voice.blockedReason === "capped_visitor") return "capped";
@@ -262,6 +263,17 @@ export default function Console({
 
   const notice = voice.blockedReason ? reasonCopy(voice.blockedReason, locale) : null;
   const voiceActive = voice.status === "connected" || voice.status === "connecting";
+
+  /**
+   * Gated on the feature, not just on whether a call is running.
+   *
+   * This controls a block carrying both the "Talk" button and the voice consent line, so with
+   * NEXT_PUBLIC_VOICE_ENABLED=0 a text-only visitor was shown a button that cannot work and — worse
+   * — a privacy notice telling them their voice is sent to ElevenLabs in the US, naming a
+   * subprocessor that receives nothing. Overstating what happens to someone's data is the wrong
+   * direction for a disclosure to be wrong in.
+   */
+  const showTalk = voiceEnabled() && !voiceActive;
   const compactOrb = !desktop && messages.length > 0;
 
   if (!open) return null;
@@ -356,7 +368,7 @@ export default function Console({
         }}
         disabled={status === "submitted"}
         voiceActive={voiceActive}
-        showTalk={!voiceActive}
+        showTalk={showTalk}
         onTalk={() => {
           setOfferText(false);
           void voice.start();
