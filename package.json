@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "pnpm compile:corpus && next build",
+    "build": "pnpm compile:corpus && pnpm build:cv && next build",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --check .",

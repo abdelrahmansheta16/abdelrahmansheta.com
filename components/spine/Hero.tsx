@@ -23,10 +23,14 @@ export default async function Hero({ locale }: { locale: string }) {
         <p className="mt-2 max-w-[var(--measure)] text-muted">{profile.subheadline}</p>
       ) : null}
 
-      {/* The one living element: the audio-reactive orb mounts here (owned by the console area). */}
-      <div id="agent-orb" className="mt-10 h-32 w-32 sm:h-40 sm:w-40" aria-hidden="true" />
-
-      <p className="mt-6 max-w-[var(--measure)] text-sm text-muted">{t("voiceNote")}</p>
+      {/*
+        The ambient audio-reactive orb was meant to mount here, but nothing ever referenced
+        #agent-orb — this element was its only mention in the repo. It reserved 128px (160 on sm) of
+        empty space above the fold for a component that never arrived. The console renders its own
+        <Orb> in its header, which is the one a visitor actually sees. When the voice path ships,
+        add the element back together with whatever mounts into it.
+      */}
+      <p className="mt-8 max-w-[var(--measure)] text-sm text-muted">{t("voiceNote")}</p>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <ConsoleTrigger

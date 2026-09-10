@@ -28,12 +28,29 @@
   --accent: #e8a33d; /* one warm accent, used for focus, links and the living element */
   --accent-soft: #2a1f0d;
 
-  --font-latin: ui-sans-serif, system-ui, sans-serif;
-  --font-arabic: ui-sans-serif, system-ui, sans-serif;
-
   --measure: 68ch;
   --step: 0.25rem;
   color-scheme: dark;
+}
+
+/*
+ * Font fallbacks, deliberately in a cascade layer.
+ *
+ * next/font puts the real families on `<html>` via the generated `.variable` classes, which declare
+ * the same two custom properties. A class selector and `:root` have identical specificity (0,1,0),
+ * so the cascade fell through to source order — and this file is imported after next/font's
+ * injected CSS. The fallback therefore won, and the site rendered in system-ui while still
+ * preloading and loading five IBM Plex woff2 files that never drew a single glyph.
+ *
+ * Unlayered styles beat layered ones regardless of order, so putting only these two declarations in
+ * a layer lets next/font win when its classes are present, while keeping a sane stack if they are
+ * ever absent. Verified in the browser: getComputedStyle(document.body).fontFamily names IBM Plex.
+ */
+@layer base {
+  :root {
+    --font-latin: ui-sans-serif, system-ui, sans-serif;
+    --font-arabic: ui-sans-serif, system-ui, sans-serif;
+  }
 }
 
 @theme inline {
