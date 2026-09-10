@@ -15,7 +15,8 @@
     "eval:smoke": "echo 'promptfoo smoke: see scripts/eval'",
     "push:agent": "tsx scripts/push-agent-config.ts",
     "build:cv": "tsx scripts/build-cv.mts",
-    "env:vercel": "tsx scripts/env-vercel.mts"
+    "env:vercel": "tsx scripts/env-vercel.mts",
+    "env:push": "bash scripts/env-push.sh"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.49",

@@ -48,3 +48,4 @@ generated/
 !.env.example
 public/cv.pdf
 scripts/eval/.cache/
+.env*.local
