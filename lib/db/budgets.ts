@@ -4,7 +4,6 @@
  * gives the reasons a TypeScript type. There is deliberately no caching and no in-process counter.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { utcMonthStartIso } from "./queries";
 
 export type ReserveRejection = "killed" | "capped_global" | "capped_visitor" | "unavailable";
 
@@ -114,20 +113,28 @@ export async function applySpendRules(
   }
 }
 
-/** Sum of `spend_events.usd` since the 1st of the current UTC month. */
-export async function monthToDateSpend(db: SupabaseClient): Promise<number> {
+/**
+ * Sum of `spend_events.usd` since the 1st of the current UTC month, or null if it cannot be read.
+ *
+ * Aggregated in Postgres. This used to select every row and reduce them here, but PostgREST caps a
+ * response at Supabase's max-rows (1000 by default), so past a thousand spend events in a month the
+ * sum silently truncated. Measured against the live database with 1,500 one-cent rows: the SQL
+ * function returns 15.00 and the client-side reduce saw 10.00. A ceiling that stops seeing spend as
+ * traffic grows fails exactly when it is needed, and at one event per LLM call a thousand a month
+ * is ordinary traffic for this site rather than a stress case.
+ *
+ * Null rather than 0 on failure: 0 is a real, meaningful value that tells apply_spend_rules to
+ * CLEAR both overrides, so a transient read error would have lifted a cap that was correctly in
+ * place. The caller skips the rules instead, leaving whatever is already set.
+ */
+export async function monthToDateSpend(db: SupabaseClient): Promise<number | null> {
   try {
-    const { data, error } = await db
-      .from("spend_events")
-      .select("usd")
-      .gte("created_at", utcMonthStartIso());
-    if (error !== null || data === null) return 0;
-    return (data as Array<{ usd: number | string }>).reduce(
-      (sum, row) => sum + (typeof row.usd === "number" ? row.usd : Number.parseFloat(row.usd)),
-      0,
-    );
+    const { data, error } = await db.rpc("month_to_date_spend");
+    if (error !== null || data === null) return null;
+    const usd = typeof data === "number" ? data : Number.parseFloat(String(data));
+    return Number.isFinite(usd) ? usd : null;
   } catch {
-    return 0;
+    return null;
   }
 }
 

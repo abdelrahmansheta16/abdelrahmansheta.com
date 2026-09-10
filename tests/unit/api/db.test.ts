@@ -177,21 +177,43 @@ describe("applySpendRules", () => {
   });
 });
 
+/**
+ * The sum moved into Postgres (migration 0007). Selecting every row and reducing here truncated at
+ * PostgREST's 1000-row cap: measured live, 1,500 one-cent rows summed to $10.00 instead of $15.00,
+ * so the $27/$30 ceiling would never have fired.
+ */
 describe("monthToDateSpend", () => {
-  it("sums the ledger, coping with numeric strings from PostgREST", async () => {
-    const db = {
-      from: () => ({
-        select: () => ({ gte: () => Promise.resolve({ data: [{ usd: 1.5 }, { usd: "2.25" }], error: null }) }),
-      }),
-    } as unknown as SupabaseClient;
+  it("asks Postgres for the total rather than summing rows here", async () => {
+    const calls: string[] = [];
+    const db = rpcClient((fn) => {
+      calls.push(fn);
+      return { data: 3.75, error: null };
+    });
     await expect(monthToDateSpend(db)).resolves.toBeCloseTo(3.75, 5);
+    expect(calls).toEqual(["month_to_date_spend"]);
   });
 
-  it("returns 0 rather than NaN when the query fails", async () => {
-    const db = {
-      from: () => ({ select: () => ({ gte: () => Promise.resolve({ data: null, error: { message: "x" } }) }) }),
-    } as unknown as SupabaseClient;
-    await expect(monthToDateSpend(db)).resolves.toBe(0);
+  it("copes with the numeric-as-string PostgREST returns for numeric columns", async () => {
+    const db = rpcClient(() => ({ data: "12.34", error: null }));
+    await expect(monthToDateSpend(db)).resolves.toBeCloseTo(12.34, 5);
+  });
+
+  /**
+   * Null, not 0. Zero is a real value that tells apply_spend_rules to CLEAR both overrides, so
+   * returning it on a failed read would lift a cap that was correctly in place.
+   */
+  it("returns null when the ledger cannot be read", async () => {
+    const db = rpcClient(() => ({ data: null, error: { message: "x" } }));
+    await expect(monthToDateSpend(db)).resolves.toBeNull();
+  });
+
+  it("returns null when the call throws", async () => {
+    await expect(monthToDateSpend(throwingClient())).resolves.toBeNull();
+  });
+
+  it("returns null rather than NaN on an unparseable total", async () => {
+    const db = rpcClient(() => ({ data: "not a number", error: null }));
+    await expect(monthToDateSpend(db)).resolves.toBeNull();
   });
 });
 

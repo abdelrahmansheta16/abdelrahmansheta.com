@@ -42,28 +42,35 @@ async function run(request: Request): Promise<Response> {
   const closed = await closeStaleSessions(db);
   await keepAliveTouch(db);
 
+  // null means the ledger could not be read. Passing 0 in that case would tell apply_spend_rules to
+  // CLEAR both overrides, so a transient error would lift a cap that was correctly in place. Skip
+  // the rules instead and leave whatever is already set; the digest reports it so it is not silent.
   const monthToDate = await monthToDateSpend(db);
-  const rule = await applySpendRules(db, monthToDate);
+  const rule = monthToDate === null ? "unknown" : await applySpendRules(db, monthToDate);
 
   const report = {
     ok: true,
     purged_rows: purged,
     closed_sessions: closed,
-    month_to_date_usd: Math.round(monthToDate * 100) / 100,
+    month_to_date_usd: monthToDate === null ? null : Math.round(monthToDate * 100) / 100,
     spend_rule: rule,
   };
+
+  // "unreadable" is louder than "$0.00" — a digest that says zero when the ledger is down reads
+  // like a quiet month rather than a broken control.
+  const mtd = report.month_to_date_usd === null ? "unreadable" : `$${report.month_to_date_usd.toFixed(2)}`;
 
   const owner = process.env.OWNER_EMAIL ?? "";
   if (owner !== "" && (await canSendEmail(db, "digest"))) {
     await send({
       to: owner,
-      subject: `abdelrahmansheta.com daily digest — $${report.month_to_date_usd.toFixed(2)} MTD (${rule})`,
+      subject: `abdelrahmansheta.com daily digest — ${mtd} MTD (${rule})`,
       text: [
         "Daily job for abdelrahmansheta.com.",
         "",
         `Rows purged:        ${String(purged)}`,
         `Stale sessions:     ${String(closed)}`,
-        `Month-to-date:      $${report.month_to_date_usd.toFixed(2)}`,
+        `Month-to-date:      ${mtd}`,
         `Spend rule applied: ${rule}`,
         "",
         rule === "voice_off"
