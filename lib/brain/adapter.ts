@@ -104,9 +104,14 @@ export interface RunBrainOptions {
 // C0/C1 control characters, minus tab/newline/carriage return, which a typed message may contain.
 const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g;
 
-/** Length cap + control-character strip for untrusted visitor text. */
-export function sanitiseUserText(text: string): string {
-  return text.replace(CONTROL_CHARS, "").slice(0, MAX_USER_CHARS);
+/**
+ * Length cap + control-character strip for untrusted visitor text.
+ *
+ * `limit` is a parameter because the chat route applies this to every turn of a submitted history,
+ * where an assistant turn is legitimately longer than a visitor's typed message.
+ */
+export function sanitiseUserText(text: string, limit: number = MAX_USER_CHARS): string {
+  return text.replace(CONTROL_CHARS, "").slice(0, limit);
 }
 
 async function sha256Hex(text: string): Promise<string> {

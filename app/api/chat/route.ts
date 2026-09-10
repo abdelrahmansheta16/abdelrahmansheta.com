@@ -18,11 +18,14 @@ import { dbOrNull } from "@/app/api/_lib/db";
 import { fail, ipHash, isHuman, visitorHash, verifyVisitorCookie, VISITOR_COOKIE } from "@/app/api/_lib/http";
 import { consumeRateSlot, createTextSession } from "@/lib/db/queries";
 import { LOCALES, type Locale } from "@/lib/tools/schema";
-import { toChatMessages } from "@/app/api/_lib/messages";
+import { boundHistory, toChatMessages } from "@/app/api/_lib/messages";
 import type { ChatMessage, Usage } from "@/lib/brain/types";
 
 /** Tool rounds allowed per visitor question before the model must answer in text. */
 const MAX_TOOL_ROUNDS = 3;
+
+/** Absurd-payload guard; the real bounding happens in boundHistory. */
+const MAX_SUBMITTED_MESSAGES = 200;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,6 +55,7 @@ export async function POST(request: Request): Promise<Response> {
     return fail("bad_request", 400);
   }
   if (!Array.isArray(body.messages) || body.messages.length === 0) return fail("bad_request", 400);
+  if (body.messages.length > MAX_SUBMITTED_MESSAGES) return fail("payload_too_large", 413);
 
   const provider = providers();
   if (provider === null) return fail("llm_unavailable", 503);
@@ -88,9 +92,10 @@ export async function POST(request: Request): Promise<Response> {
   flags.greetingPlayed = true; // the text console shows the disclosure in the UI, not in a turn
 
   const modelMessages = await convertToModelMessages(body.messages as UIMessage[]);
-  const history = toChatMessages(modelMessages);
-  const messages: ChatMessage[] =
-    history[0]?.role === "system" ? history : [{ role: "system", content: "" }, ...history];
+  const history = boundHistory(toChatMessages(modelMessages));
+  // The system slot is ours alone: boundHistory drops every client-supplied system turn, and
+  // runBrain overwrites index 0 with the compiled corpus.
+  const messages: ChatMessage[] = [{ role: "system", content: "" }, ...history];
 
   /**
    * How many assistant turns since the visitor last spoke ended in a tool call. The client resubmits
