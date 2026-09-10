@@ -23,23 +23,35 @@ meant a green build could publish a site about "Nour Example" under your name wi
 
 ## 2. Environment variables
 
-Project → Settings → Environment Variables. Mark every one Sensitive. Values for the LLM slots are in
-your local `.env.local`.
+Project → Settings → Environment Variables, Production **and** Preview, every row Sensitive. The UI
+accepts a whole `.env` block pasted at once.
+
+`pnpm env:vercel` writes a ready-to-paste `.env.vercel` (gitignored): it copies the LLM slots from
+your `.env.local`, generates the four secrets fresh, fills in the values that are already known, and
+leaves exactly two blanks for you.
 
 | Variable | Notes |
 |---|---|
-| `CORPUS_REPO_TOKEN` | from step 1 — the build fails without it |
+| `CORPUS_REPO_TOKEN` | from step 1 — the build fails without it, by design |
+| `SUPABASE_SERVICE_ROLE_KEY` | the **secret** key, not a publishable one — see step 3 |
+| `SUPABASE_URL` | `https://zpppersjjcoefcemidmw.supabase.co` |
 | `LLM_PRIMARY_API_KEY` / `_BASE_URL` / `_MODEL` | DeepSeek V4 Flash on Alibaba Model Studio (Singapore) |
 | `LLM_FALLBACK_API_KEY` / `_BASE_URL` / `_MODEL` | Qwen, same account and key |
+| `VISITOR_COOKIE_SECRET`, `IP_HASH_SALT`, `CRON_SECRET`, `LLM_ADAPTER_SECRET` | `openssl rand -hex 24` each — do not reuse the local ones |
 | `OWNER_EMAIL` | where "leave a message" is delivered |
-| `VISITOR_COOKIE_SECRET`, `IP_HASH_SALT`, `CRON_SECRET` | generate fresh with `openssl rand -hex 24` — do not reuse the local ones |
-| `SITE_URL` | `https://sheta-ai-abdelrahmansheta16s-projects.vercel.app` for now |
 | `NEXT_PUBLIC_VOICE_ENABLED` | `0` until the voice clone is done |
-| `SUPABASE_URL` | `https://zpppersjjcoefcemidmw.supabase.co` |
-| `SUPABASE_SERVICE_ROLE_KEY` | the **secret** key, not a publishable one — see step 3 |
 
-`SITE_URL` is only read by `scripts/push-agent-config.ts`; the canonical URLs the site renders come
-from the corpus, not from this variable.
+Optional: `RESEND_API_KEY` and `RESEND_FROM`. Without them a visitor's message is still *stored*, it
+just is not mailed to you, and the daily digest is skipped. Nothing errors.
+
+**Do not set these on Vercel**, whatever `.env.example` suggests:
+
+- `KNOWLEDGE_DIR` — local dev only. Setting it would break the corpus fetch at build time.
+- `ALLOW_EXAMPLE_CORPUS` — it exists so a fork can demo itself; here it would publish the example
+  person's content under your name.
+- `SITE_URL` — read only by `scripts/push-agent-config.ts`. The canonical URLs the site renders come
+  from the corpus, not from this variable. (An earlier version of this table listed it as required.)
+- `ELEVENLABS_*` — voice is off, and each of those paths degrades cleanly.
 
 Text chat works without the database. Rate limiting, transcripts and the spend ledger do not, so the
 site runs but you cannot see what recruiters asked.
