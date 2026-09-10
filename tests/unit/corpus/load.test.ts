@@ -30,7 +30,12 @@ describe("loadCorpus", () => {
     expect(sources.profile.name).toBe("Nour Example");
     expect(sources.proofPoints.length).toBeGreaterThan(0);
     expect(sources.redlines.map((r) => r.id).sort()).toEqual(["confidential", "contact", "job_seeking", "salary"]);
-    expect(sources.projects).toHaveLength(1);
+    // Two projects, one per public_level: the guardrails need a summary_only fixture to assert
+    // against, and loaded sources still carry its body — the compiler is what drops it.
+    expect(sources.projects.map((p) => p.public_level).sort()).toEqual(["public", "summary_only"]);
+    expect(sources.projects.find((p) => p.public_level === "summary_only")?.body).toContain(
+      "PRIVATEBODYCANARY",
+    );
     expect(sources.stories).toHaveLength(1);
     expect(sources.opinions).toHaveLength(1);
     expect(sources.denylist).toContain("nour.example@gmail.com");

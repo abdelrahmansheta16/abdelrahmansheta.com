@@ -234,8 +234,32 @@ export function buildGuardConfig(sources: CorpusSources, systemPrompt: string): 
   };
 }
 
+/**
+ * Drops the body of every `summary_only` project.
+ *
+ * docs/INTAKE.md describes this marker as "the body is dropped at compile time", and it is what an
+ * author reaches for when the detail is interesting but the employer would not want it published.
+ * Nothing implemented it. The body was therefore server-rendered into the public homepage and
+ * pushed verbatim into the system prompt, where section 8 only *asked* the model to stay
+ * high-level — a request, not a control.
+ *
+ * This runs on the loaded sources, before the prompt is rendered, so the prompt, the guard config
+ * and the bundled module are all built from the redacted corpus and cannot disagree about it. The
+ * public summary of such a project is spoken_en / spoken_ar, which the agent says to strangers and
+ * is public by construction.
+ */
+export function redactSummaryOnlyBodies(sources: CorpusSources): CorpusSources {
+  return {
+    ...sources,
+    projects: sources.projects.map((project) =>
+      project.public_level === "summary_only" ? { ...project, body: "" } : project,
+    ),
+  };
+}
+
 export async function compileCorpus(opts: CompileOptions): Promise<CompileResult> {
-  const { sources, warnings } = await loadCorpus(opts.dir);
+  const { sources: loaded, warnings } = await loadCorpus(opts.dir);
+  const sources = redactSummaryOnlyBodies(loaded);
   const systemPrompt = renderSystemPrompt(sources);
 
   const failures = lintCorpus(sources, systemPrompt, opts.lint);
@@ -267,6 +291,7 @@ export async function compileCorpus(opts: CompileOptions): Promise<CompileResult
     // spine both filter already, but the compiled module is bundled into the deployed output, so a
     // metric marked public:false would otherwise be readable in the shipped source even though no
     // page renders it. Stripping at the compiler means it never leaves the private corpus.
+    // Bodies of summary_only projects are already gone — see redactSummaryOnlyBodies above.
     projects: sources.projects.map(({ file: _file, ...project }) => ({
       ...project,
       metrics: project.metrics.filter((metric) => metric.public),

@@ -85,12 +85,21 @@ describe.skipIf(!EXAMPLE_CORPUS_READY)(
       corpus = await compileExampleCorpus();
     });
 
+    /**
+     * The example corpus must actually contain a summary_only project, or this loop iterates over
+     * nothing and reports green while the real corpus leaks — which is exactly what happened. The
+     * count assertion is the part that fails if someone removes the fixture.
+     */
     it("only exposes project bodies whose public_level is public", () => {
-      for (const project of corpus.projects) {
-        if (project.public_level === "summary_only") {
-          expect(project.body.trim()).toBe("");
-        }
+      const summaryOnly = corpus.projects.filter((p) => p.public_level === "summary_only");
+      expect(summaryOnly.length, "knowledge.example needs a summary_only fixture").toBeGreaterThan(0);
+      for (const project of summaryOnly) {
+        expect(project.body.trim()).toBe("");
       }
+    });
+
+    it("keeps a summary_only body out of the compiled system prompt", () => {
+      expect(corpus.systemPrompt).not.toContain("PRIVATEBODYCANARY");
     });
 
     it("only exposes metrics marked public", () => {
@@ -98,6 +107,52 @@ describe.skipIf(!EXAMPLE_CORPUS_READY)(
         for (const metric of project.metrics) {
           expect(metric.public).toBe(true);
         }
+      }
+    });
+  },
+);
+
+/**
+ * The block above proves the compiler is correct against a fixture. This one asserts the same rule
+ * against the artefact that actually deploys — lib/corpus/corpus.generated.ts, built from the real
+ * private corpus. A rule verified only against the example corpus is a rule verified against
+ * content nobody ships; that gap is how a 2,791-character confidential body reached the public
+ * homepage and the system prompt while `pnpm guard` reported green.
+ */
+describe.skipIf(!GUARD_READY)(
+  suite("invariant 3 — the shipped corpus, not just the example", GUARD_READY, skipMsg.guard),
+  () => {
+    let shipped: CompiledCorpus;
+    beforeAll(async () => {
+      shipped = (await import("@/lib/corpus/corpus.generated")).CORPUS as CompiledCorpus;
+    });
+
+    it("carries no body for a summary_only project", () => {
+      for (const project of shipped.projects) {
+        if (project.public_level === "summary_only") {
+          expect(project.body.trim(), `${project.slug}: summary_only body must be dropped`).toBe("");
+        }
+      }
+    });
+
+    it("carries no non-public metric", () => {
+      for (const project of shipped.projects) {
+        for (const metric of project.metrics) {
+          expect(metric.public, `${project.slug}: "${metric.text}"`).toBe(true);
+        }
+      }
+    });
+
+    it("keeps every summary_only body out of the system prompt", () => {
+      for (const project of shipped.projects) {
+        if (project.public_level !== "summary_only") continue;
+        // The prompt may name the project and say it is summary only; it must not carry prose.
+        const block = shipped.systemPrompt.split(`Slug: ${project.slug}`)[1] ?? "";
+        const untilNext = block.split("\n### ")[0] ?? "";
+        expect(
+          untilNext,
+          `${project.slug}: prompt section 8 must not restate the private body`,
+        ).toContain("summary only");
       }
     });
   },

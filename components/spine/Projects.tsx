@@ -33,8 +33,16 @@ export default async function Projects({ locale }: { locale: string }) {
                   {project.employer} · {project.period}
                 </bdi>
               </p>
+              {/*
+                A summary_only project has no body: the compiler drops it, because the employer
+                would not want it published. What stays public is the spoken talking point, which
+                the agent says aloud to any visitor and is public by construction. Falling back to
+                it keeps the card from rendering an empty paragraph.
+              */}
               <p className="mt-3 text-sm text-fg">
-                <bdi dir="ltr">{project.body}</bdi>
+                <bdi dir="ltr">
+                  {project.body || (locale === "ar" ? project.spoken_ar : project.spoken_en) || ""}
+                </bdi>
               </p>
 
               {project.metrics.filter((m) => m.public).length > 0 ? (
