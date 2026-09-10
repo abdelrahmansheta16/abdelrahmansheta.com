@@ -160,3 +160,67 @@ describe("sentence splitting — decimals stay whole so the allowlist can match"
     expect(events.filter((e) => e.type === "sentence").length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe("tool-call arguments go through the guard", () => {
+  function toolProvider(name: string, args: string): ProviderAdapter {
+    return {
+      name: "deepseek",
+      model: "fake",
+      async *stream(_r: ProviderRequest): AsyncGenerator<ProviderEvent> {
+        yield { type: "tool_call", id: "t1", name, arguments: args };
+        yield { type: "finish", reason: "stop" };
+      },
+    };
+  }
+
+  async function runTool(name: string, args: string): Promise<BrainEvent[]> {
+    const out: BrainEvent[] = [];
+    for await (const e of runBrain({
+      corpus: CORPUS,
+      guard: realGuard(),
+      providers: toolProvider(name, args),
+      messages: messages(),
+      channel: "text",
+      locale: "en",
+      flags: flags(),
+    })) {
+      out.push(e);
+    }
+    return out;
+  }
+
+  const kinds = (events: BrainEvent[]): string[] => events.map((e) => e.type);
+
+  it("drops a tool call whose free-text reason claims he is actively looking", async () => {
+    const events = await runTool(
+      "offer_lead_capture",
+      JSON.stringify({ reason: "He is actively looking for a backend lead role." }),
+    );
+    expect(kinds(events)).not.toContain("tool_call");
+    expect(blocked(events)).toContain("job_seeking");
+  });
+
+  it("drops a tool call carrying a phone number", async () => {
+    const events = await runTool(
+      "offer_lead_capture",
+      JSON.stringify({ reason: "Reach him on 01001234567." }),
+    );
+    expect(kinds(events)).not.toContain("tool_call");
+    expect(blocked(events)).toContain("phone");
+  });
+
+  it("lets an ordinary tool call through", async () => {
+    const events = await runTool(
+      "offer_lead_capture",
+      JSON.stringify({ reason: "You mentioned a backend role and asked how to reach him." }),
+    );
+    expect(kinds(events)).toContain("tool_call");
+    expect(blocked(events)).toEqual([]);
+  });
+
+  it("does not reject every call by linting the JSON blob as json_shape", async () => {
+    const events = await runTool("show_project", JSON.stringify({ slug: "rafeeq" }));
+    expect(kinds(events)).toContain("tool_call");
+    expect(blocked(events)).toEqual([]);
+  });
+});

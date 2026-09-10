@@ -46,6 +46,33 @@ function isBetweenDigits(text: string, i: number): boolean {
   return /\d/.test(text[i - 1] ?? "") && /\d/.test(text[i + 1] ?? "");
 }
 
+/**
+ * Every string value inside a tool call's JSON arguments, recursively.
+ *
+ * The string VALUES, deliberately, not the raw JSON: the guard's `json_shape` rule fires on
+ * anything JSON-shaped, so linting the argument blob itself would reject every tool call.
+ *
+ * Unparseable arguments yield nothing to lint. That is not a hole — the console validates each
+ * call with the tool's own zod schema and drops anything that fails, so a malformed blob never
+ * reaches a card.
+ */
+export function argumentStrings(args: string): string[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(args);
+  } catch {
+    return [];
+  }
+  const out: string[] = [];
+  const walk = (value: unknown): void => {
+    if (typeof value === "string") out.push(value);
+    else if (Array.isArray(value)) value.forEach(walk);
+    else if (value !== null && typeof value === "object") Object.values(value).forEach(walk);
+  };
+  walk(parsed);
+  return out;
+}
+
 /** Guard rules plus the input-side heuristic, which is not a corpus red line. */
 export type BrainGuardRule = GuardRule | "injection";
 
@@ -285,11 +312,38 @@ export async function* runBrain(opts: RunBrainOptions): AsyncIterable<BrainEvent
   let digitCarry = "";
   let finished = false;
 
+  /**
+   * The guard, applied to a tool call's arguments.
+   *
+   * checkSentence only ever ran on text, so every tool call went out with its `arguments` string
+   * untouched — and `offer_lead_capture` carries a free-text `reason` that the console renders on
+   * the page verbatim. Its schema caps the length and nothing else. That made it the one
+   * model-authored string reaching a visitor without passing a red line, which matters most for
+   * `job_seeking`: the tool fires precisely on hiring intent, so "he's actively looking for a
+   * backend lead" is exactly the phrasing it invites, and the prompt rule is meant to have the
+   * guard behind it. It also let the prompt canary out through a channel the tripwire never saw.
+   *
+   * Dropping the whole call rather than blanking the field: a card whose text was refused has
+   * nothing useful left to show, and the model can try again in words.
+   */
+  function toolArgRule(args: string): GuardRule | null {
+    for (const value of argumentStrings(args)) {
+      const fired = guard.lint(value);
+      if (fired.length > 0) return fired[0];
+    }
+    return null;
+  }
+
   async function* release(sentence: string): AsyncIterable<BrainEvent> {
     // 8 — DeepSeek sometimes emits a function call as plain content (issue #1244).
     const leaked = detectLeaked(sentence);
     if (leaked !== null) {
       if (allowTool(leaked.name, flags)) {
+        const rule = toolArgRule(leaked.arguments);
+        if (rule !== null) {
+          yield { type: "guard", rule, sha256: await digest(leaked.arguments) };
+          return;
+        }
         yield { type: "tool_call", id: newId(), name: leaked.name, arguments: leaked.arguments };
       }
       return;
@@ -341,6 +395,11 @@ export async function* runBrain(opts: RunBrainOptions): AsyncIterable<BrainEvent
       const rest = sentences.flush();
       if (rest !== null) yield* release(rest);
       if (KNOWN_TOOL_NAMES.has(ev.name) && !allowTool(ev.name as ToolName, flags)) continue;
+      const rule = toolArgRule(ev.arguments);
+      if (rule !== null) {
+        yield { type: "guard", rule, sha256: await digest(ev.arguments) };
+        continue;
+      }
       yield ev;
       continue;
     }
