@@ -160,6 +160,8 @@ export type Topics = z.infer<typeof TopicsSchema>;
 export type ProjectFrontmatter = z.infer<typeof ProjectFrontmatterSchema>;
 export type Story = z.infer<typeof StorySchema>;
 
+import type { ProjectSummary } from "./summarise";
+
 /** Shape of lib/corpus/corpus.generated.ts (gitignored). */
 export interface CompiledCorpus {
   version: string; // first 12 hex of sha256(systemPrompt)
@@ -173,7 +175,12 @@ export interface CompiledCorpus {
   redlines: Redline[];
   topics: Topics;
   pronunciation: Pronunciation[];
-  projects: Array<ProjectFrontmatter & { body: string }>;
+  /**
+   * `summary` is derived from `body` at compile time (lib/corpus/summarise.ts) so the cards can
+   * show bullets instead of an 8,000-character deep-dive. Derived from the REDACTED body, so a
+   * summary_only project yields nothing and the card falls back to its spoken talking point.
+   */
+  projects: Array<ProjectFrontmatter & { body: string; summary: ProjectSummary }>;
   consent: { en: string; ar: string };
   disclosure: { en: string; ar: string };
   /** Runtime configuration for the red-line guard, derived from the same sources as the prompt. */

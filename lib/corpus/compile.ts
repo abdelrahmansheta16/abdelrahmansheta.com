@@ -14,6 +14,7 @@ import {
 } from "./lint";
 import { CONSENT, DISCLOSURE, renderSystemPrompt } from "./prompt";
 import { isPlaceholder } from "./placeholders";
+import { summariseBody } from "./summarise";
 
 export interface CompileOptions {
   dir: string; // path to a corpus directory (private repo checkout or knowledge.example)
@@ -311,6 +312,9 @@ export async function compileCorpus(opts: CompileOptions): Promise<CompileResult
     // Bodies of summary_only projects are already gone — see redactSummaryOnlyBodies above.
     projects: sources.projects.map(({ file: _file, ...project }) => ({
       ...project,
+      // `sources` is already redacted, so a summary_only project summarises an empty string and
+      // yields nothing — the card then falls back to its spoken talking point, as it should.
+      summary: summariseBody(project.body),
       metrics: project.metrics.filter((metric) => metric.public),
     })),
     consent: { en: CONSENT.en, ar: CONSENT.ar },

@@ -35,16 +35,49 @@ export default async function Projects({ locale }: { locale: string }) {
                 </bdi>
               </p>
               {/*
-                A summary_only project has no body: the compiler drops it, because the employer
-                would not want it published. What stays public is the spoken talking point, which
-                the agent says aloud to any visitor and is public by construction. Falling back to
-                it keeps the card from rendering an empty paragraph.
+                A card is a summary; the agent holds the depth.
+
+                This used to render `project.body` — the entire deep-dive, up to 8,000 characters,
+                in one <p>, with the `##` markdown showing as literal text. Eight of those made the
+                section about 34,000 characters of unbroken prose that nobody was going to read.
+
+                `summary` is derived at compile time from the same body: the author's own opening
+                paragraph, then one bullet per section he wrote, labelled with his own heading. A
+                summary_only project has an empty body, so it summarises to nothing and falls back
+                to the spoken talking point, which the agent says aloud to strangers anyway.
               */}
-              <p className="mt-3 text-sm text-fg">
-                <bdi dir="ltr">
-                  {project.body || (locale === "ar" ? project.spoken_ar : project.spoken_en) || ""}
-                </bdi>
-              </p>
+              {project.summary.lead ? (
+                <p className="mt-3 text-sm text-fg">
+                  <bdi dir="ltr">{project.summary.lead}</bdi>
+                </p>
+              ) : null}
+
+              {project.summary.highlights.length > 0 ? (
+                <ul className="mt-3 space-y-2">
+                  {project.summary.highlights.map((h) => (
+                    <li key={h.label} className="flex gap-2.5 text-sm">
+                      <span
+                        aria-hidden="true"
+                        className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-accent-dim"
+                      />
+                      <span>
+                        <strong className="font-medium text-fg">
+                          <bdi dir="ltr">{h.label}</bdi>
+                        </strong>{" "}
+                        <span className="text-muted">
+                          <bdi dir="ltr">{h.text}</bdi>
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm text-fg">
+                  <bdi dir="ltr">
+                    {(locale === "ar" ? project.spoken_ar : project.spoken_en) ?? ""}
+                  </bdi>
+                </p>
+              )}
 
               {project.metrics.filter((m) => m.public).length > 0 ? (
                 <ul className="mt-3 flex flex-wrap gap-2">
